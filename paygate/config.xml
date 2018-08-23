@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+/*
+ * Copyright (c) 2018 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ * 
+ * Released under the GNU General Public License
+ */
+-->
+<module>
+    <name>paygate</name>
+    <displayName><![CDATA[PayGate]]></displayName>
+    <version><![CDATA[1.7.4]]></version>
+    <description><![CDATA[Accept payments via PayGate.]]></description>
+    <author><![CDATA[PayGate]]></author>
+    <tab><![CDATA[payments_gateways]]></tab>
+	<confirmUninstall><![CDATA[Are you sure you want to delete your details ?]]></confirmUninstall>
+    <is_configurable>1</is_configurable>
+    <need_instance>1</need_instance>
+	<limited_countries></limited_countries>
+</module>
