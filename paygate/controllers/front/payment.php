@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2018 PayGate (Pty) Ltd
+ * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  * 
@@ -111,6 +111,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
 
         $checksum     = md5( $checksum_source );
         $returnUrl    = urlencode( $returnUrl );
+        $notifyUrl    = urlencode( $notifyUrl );
         $initiateData = array(
             'PAYGATE_ID'        => $paygateID,
             'REFERENCE'         => $reference,
@@ -141,6 +142,8 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
 
         rtrim( $fields_string, '&' );
 
+        $responseData = '';
+
         try {
             // Open connection
             $ch = curl_init();
@@ -159,7 +162,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             curl_close( $ch );
 
         } catch ( Exception $e ) {
-
+            
         }
 
         parse_str( $result );
