@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2018 PayGate (Pty) Ltd
+ * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  * 
@@ -21,7 +21,7 @@ class Paygate extends PaymentModule
     {
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.7.4';
+        $this->version     = '1.7.5';
         $this->author      = 'PayGate';
         $this->controllers = array( 'payment', 'validation' );
 
