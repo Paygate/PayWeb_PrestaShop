@@ -21,7 +21,7 @@ class Paygate extends PaymentModule
     {
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.7.5';
+        $this->version     = '1.7.6';
         $this->author      = 'PayGate';
         $this->controllers = array( 'payment', 'validation' );
 

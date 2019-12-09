@@ -1,3 +1,10 @@
+{*
+ * Copyright (c) 2019 PayGate (Pty) Ltd
+ *
+ * Author: App Inlet (Pty) Ltd
+ * 
+ * Released under the GNU General Public License
+ *}
 {extends file='page.tpl'} 
 {block name='content'}
 <div class="card">
