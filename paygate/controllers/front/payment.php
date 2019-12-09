@@ -3,9 +3,10 @@
  * Copyright (c) 2019 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
- * 
+ *
  * Released under the GNU General Public License
  */
+
 class PaygatePaymentModuleFrontController extends ModuleFrontController
 {
     public function initContent()
@@ -33,9 +34,9 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
 
         if ( $this->context->cart->id_currency != $currency->id ) {
             // If paygate currency differs from local currency
-            $this->context->cart->id_currency = (int) $currency->id;
-            $cookie->id_currency              = (int) $this->context->cart->id_currency;
-            $cart->update();
+            $this->context->cart->id_currency   = (int) $currency->id;
+            $this->context->cookie->id_currency = (int) $this->context->cart->id_currency;
+            $this->context->cart->update();
         }
 
         $dateTime                          = new DateTime();
@@ -43,7 +44,8 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $this->context->cookie->order_time = $time;
         $this->context->cookie->cart_id    = $this->context->cart->id;
         $paygateID                         = filter_var( Configuration::get( 'PAYGATE_ID' ), FILTER_SANITIZE_STRING );
-        $reference                         = filter_var( $this->context->cart->id . $time, FILTER_SANITIZE_STRING );
+        $reference                         = filter_var( $this->context->cart->id . '_' . $time, FILTER_SANITIZE_STRING );
+        $this->context->cookie->reference  = $reference;
         $amount                            = filter_var( $total * 100, FILTER_SANITIZE_NUMBER_INT );
         $currency                          = filter_var( $currency->iso_code, FILTER_SANITIZE_STRING );
         $returnUrl                         = filter_var( $this->context->link->getModuleLink( $this->module->name, 'confirmation', ['key' => $this->context->cart->secure_key], true ), FILTER_SANITIZE_URL );
@@ -162,7 +164,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             curl_close( $ch );
 
         } catch ( Exception $e ) {
-            
+
         }
 
         parse_str( $result );
