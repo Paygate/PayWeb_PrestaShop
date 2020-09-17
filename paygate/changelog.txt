@@ -1,0 +1,19 @@
+=====================================
+Date	  : Version: Description
+=====================================
+ 
+2017-11-22: v1.0.0 : Initial Release.
+
+2017-12-04:        : Add return url
+                   : Code reformat
+
+2018-08-06: v1.0.1 : Code format
+                     Logo changes
+
+2019-07-03: v1.7.5 : Url encode notify
+
+2019-12-07: v1.7.6 : Included PW3 query in confirmation.php (direct return)
+                     Handle cases where order has already been updated by notify
+
+2020-09-17: v1.7.7 : Fix sessions cleared in some browsers.
+                     Resolve shipping ignored issue with some providers.
