@@ -13,6 +13,7 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
     public function initContent()
     {
         parent::initContent();
+        $order = null;
 
         $status = null;
 
@@ -70,11 +71,13 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
                         if ( is_array( $result ) && isset( $result['TRANSACTION_STATUS'] ) ) {
                             // Update purchase status
                             $method_name = $this->module->displayName;
-                            if ( !$order ) {
-                                $this->module->validateOrder( $cart->id, _PS_OS_PAYMENT_, (float) ( $result['AMOUNT'] / 100.0 ),
-                                    $method_name, null, array( 'transaction_id' => $result['USER1'] ), null, false, $cart->secure_key );
-                            } else {
-                                $order->addOrderPayment( (float) ( $result['AMOUNT'] / 100.0 ), $method_name, $cart->secure_key );
+                            if (Configuration::get( 'PAYGATE_IPN_TOGGLE' )) {
+                                if ( !$order ) {
+                                    $this->module->validateOrder( $cart->id, _PS_OS_PAYMENT_, (float) ( $result['AMOUNT'] / 100.0 ),
+                                        $method_name, null, array( 'transaction_id' => $result['USER1'] ), null, false, $cart->secure_key );
+                                } else {
+                                    $order->addOrderPayment( (float) ( $result['AMOUNT'] / 100.0 ), $method_name, $cart->secure_key );
+                                }
                             }
                             Tools::redirect( $this->context->link->getPageLink( 'order-confirmation', null, null, 'key=' . $cart->secure_key . '&id_cart=' . (int) ( $cart->id ) . '&id_module=' . (int) ( $this->module->id ) ) );
                         }

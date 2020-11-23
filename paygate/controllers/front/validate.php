@@ -19,9 +19,11 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         $post_data      = '';
         $checkSumParams = '';
 
+        $toggleIPN = Configuration::get( 'PAYGATE_IPN_TOGGLE' );
+
         $this->module->logData( "=========Notify Response: " . date( 'Y-m-d H:i:s' ) . "============\n\n" );
 
-        if ( !$errors ) {
+        if ( !$errors && !$toggleIPN ) {
             foreach ( $_POST as $key => $val ) {
                 $post_data .= $key . '=' . $val . "\n";
                 $notify_data[$key] = stripslashes( $val );
@@ -50,7 +52,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         }
 
         // Verify security signature
-        if ( !$errors ) {
+        if ( !$errors && !$toggleIPN ) {
             $checkSumParams = md5( $checkSumParams );
             if ( !hash_equals( $checkSumParams, $notify_data['CHECKSUM'] ) ) {
                 $error_message = 'Invalid checksum, checksum: ' . $checkSumParams;
@@ -58,12 +60,12 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         }
 
         // Check status and update order
-        if ( !$errors ) {
+        if ( !$errors && !$toggleIPN) {
             $transaction_id = $notify_data['TRANSACTION_ID'];
             $method_name    = $this->module->displayName;
 
             if ( $notify_data['PAY_METHOD_DETAIL'] != '' ) {
-                $method_name = $notify_data['PAY_METHOD_DETAIL'] . ' via PayGate';
+                $method_name = 'PayGate';
             }
             switch ( $notify_data['TRANSACTION_STATUS'] ) {
                 case '1':
