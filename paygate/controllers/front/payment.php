@@ -47,7 +47,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $this->context->cookie->order_time = $time;
         $this->context->cookie->cart_id    = $cart_id;
         $paygateID                         = filter_var( Configuration::get( 'PAYGATE_ID' ), FILTER_SANITIZE_STRING );
-        $reference                         = filter_var( $cart_id . '_' . $time, FILTER_SANITIZE_STRING );
+        $reference                         = filter_var( $cart_id . '_' . $dateTime->format( 'Y-m-d H:i:s' ), FILTER_SANITIZE_STRING );
         $this->context->cookie->reference  = $reference;
         $amount                            = filter_var( $total * 100, FILTER_SANITIZE_NUMBER_INT );
         $currency                          = filter_var( $currency->iso_code, FILTER_SANITIZE_STRING );
