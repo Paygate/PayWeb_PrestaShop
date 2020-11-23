@@ -23,19 +23,19 @@ class Paygate extends PaymentModule
     {
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.7.7';
+        $this->version     = '1.7.8';
         $this->author      = 'PayGate';
         $this->controllers = array( 'payment', 'validation' );
 
         $this->bootstrap = true;
         parent::__construct();
 
-        $this->displayName      = $this->trans( 'PayGate', array(), PAYGATE_ADMIN );
-        $this->description      = $this->trans( 'Accept payments via PayGate.', array(), PAYGATE_ADMIN );
+        $this->displayName      = $this->trans( 'PayGate', array(), self::PAYGATE_ADMIN );
+        $this->description      = $this->trans( 'Accept payments via PayGate.', array(), self::PAYGATE_ADMIN );
         $this->confirmUninstall = $this->trans(
             'Are you sure you want to delete your details ?',
             array(),
-            PAYGATE_ADMIN
+            self::PAYGATE_ADMIN
         );
         $this->ps_versions_compliancy = array( 'min' => '1.7.1.0', 'max' => _PS_VERSION_ );
     }
@@ -266,36 +266,53 @@ class Paygate extends PaymentModule
         $fields_form = array(
             'form' => array(
                 'legend' => array(
-                    'title' => $this->trans( 'Settings', array(), PAYGATE_ADMIN ),
+                    'title' => $this->trans( 'Settings', array(), self::PAYGATE_ADMIN ),
                     'icon'  => 'icon-envelope',
                 ),
                 'input'  => array(
                     array(
                         'type'     => 'text',
-                        'label'    => $this->trans( 'PayGate ID', array(), PAYGATE_ADMIN ),
+                        'label'    => $this->trans( 'PayGate ID', array(), self::PAYGATE_ADMIN ),
                         'name'     => 'PAYGATE_ID',
                         'required' => true,
                     ),
                     array(
                         'type'     => 'text',
-                        'label'    => $this->trans( 'Encryption Key', array(), PAYGATE_ADMIN ),
+                        'label'    => $this->trans( 'Encryption Key', array(), self::PAYGATE_ADMIN ),
                         'name'     => 'PAYGATE_ENCRYPTION_KEY',
                         'required' => true,
                     ),
                     array(
                         'type'   => 'switch',
-                        'label'  => $this->trans( 'Debug', array(), PAYGATE_ADMIN ),
+                        'label'  => $this->trans( 'Disable IPN', array(), 'Modules.Paygate.Admin' ),
+                        'name'   => 'PAYGATE_IPN_TOGGLE',
+                        'values' => array(
+                            array(
+                                'id'    => 'active_on',
+                                'value' => 1,
+                                'label' => $this->trans( 'IPN', array(), 'Modules.Paygate.Admin' ),
+                            ),
+                            array(
+                                'id'    => 'active_off',
+                                'value' => 0,
+                                'label' => $this->trans( 'Redirect', array(), 'Modules.Paygate.Admin' ),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'type'   => 'switch',
+                        'label'  => $this->trans( 'Debug', array(), 'Modules.Paygate.Admin' ),
                         'name'   => 'PAYGATE_LOGS',
                         'values' => array(
                             array(
                                 'id'    => 'active_on',
                                 'value' => 1,
-                                'label' => $this->trans( 'Yes', array(), PAYGATE_ADMIN ),
+                                'label' => $this->trans( 'Yes', array(), self::PAYGATE_ADMIN ),
                             ),
                             array(
                                 'id'    => 'active_off',
                                 'value' => 0,
-                                'label' => $this->trans( 'No', array(), PAYGATE_ADMIN ),
+                                'label' => $this->trans( 'No', array(), self::PAYGATE_ADMIN ),
                             ),
                         ),
                     ),
@@ -331,13 +348,13 @@ class Paygate extends PaymentModule
                 $this->_postErrors[] = $this->trans(
                     'The "PayGate ID" field is required.',
                     array(),
-                    PAYGATE_ADMIN
+                    self::PAYGATE_ADMIN
                 );
             } elseif ( !Tools::getValue( 'PAYGATE_ENCRYPTION_KEY' ) ) {
                 $this->_postErrors[] = $this->trans(
                     'The "Encryption Key" field is required.',
                     array(),
-                    PAYGATE_ADMIN
+                    self::PAYGATE_ADMIN
                 );
             }
         }
@@ -349,6 +366,7 @@ class Paygate extends PaymentModule
             Configuration::updateValue( 'PAYGATE_ID', Tools::getValue( 'PAYGATE_ID' ) );
             Configuration::updateValue( 'PAYGATE_ENCRYPTION_KEY', Tools::getValue( 'PAYGATE_ENCRYPTION_KEY' ) );
             Configuration::updateValue( 'PAYGATE_LOGS', Tools::getValue( 'PAYGATE_LOGS' ) );
+            Configuration::updateValue( 'PAYGATE_IPN_TOGGLE', Tools::getValue( 'PAYGATE_IPN_TOGGLE' ) );
         }
         $this->_html .= $this->displayConfirmation(
             $this->trans( 'Settings updated', array(), 'Admin.Notifications.Success' )
@@ -364,6 +382,7 @@ class Paygate extends PaymentModule
                 Configuration::get( 'PAYGATE_ENCRYPTION_KEY' )
             ),
             'PAYGATE_LOGS'           => Tools::getValue( 'PAYGATE_LOGS', Configuration::get( 'PAYGATE_LOGS' ) ),
+            'PAYGATE_IPN_TOGGLE'     => Tools::getValue( 'PAYGATE_IPN_TOGGLE', Configuration::get( 'PAYGATE_IPN_TOGGLE' ) ),
         );
     }
 
