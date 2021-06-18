@@ -4,7 +4,7 @@
 This is the PayGate PayWeb3 plugin for PrestaShop. Please feel free to contact the PayGate support team at support@paygate.co.za should you require any assistance.
 
 ## Installation
-[![How To Setup PayGate PayWeb for PrestaShop 1.7](https://www.appinlet.com/wp-content/uploads/2018/09/PrestaShop-1.7-Integration.jpg)](https://www.youtube.com/watch?v=H3e624nH5Wk "How To Setup PayGate PayWeb for PrestaShop 1.7")
+[![How To Setup PayGate PayWeb for PrestaShop 1.7](https://appinlet.com/wp-content/uploads/2021/01/How-To-Setup-PayGate-PayWeb-for-PrestaShop-1.7.jpg)](https://www.youtube.com/watch?v=H3e624nH5Wk "How To Setup PayGate PayWeb for PrestaShop 1.7")
 
 Please navigate to the [releases page](https://github.com/PayGate/PayWeb_PrestaShop_1.7/releases), download the latest release (v1.7.8) and unzip. You will then be able to follow the integration guide PDF which is included in the zip.
 
