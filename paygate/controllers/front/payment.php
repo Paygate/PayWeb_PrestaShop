@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2020 PayGate (Pty) Ltd
+ * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -9,17 +9,24 @@
 
 class PaygatePaymentModuleFrontController extends ModuleFrontController
 {
+    protected $vaultableMethods = ['creditcard'];		
+    protected $paygatePayMethods = [];		
+
     public function initContent()
     {
         parent::initContent();
 
         require_once _PS_MODULE_DIR_ . $this->module->name . '/classes/countries.php';
+		require_once _PS_MODULE_DIR_ . $this->module->name . '/classes/methods.php';
         require_once _PS_MODULE_DIR_ . $this->module->name . '/paygate.php';
 
         $iso_code    = $this->context->language->iso_code;
         $cart_id     = $this->context->cart->id;
         $customer_id = $this->context->cart->id_customer;
         $secure_key  = $this->context->cart->secure_key;
+		
+		$paygateMethodsList = new PaygateMethodsList();
+		$this->paygatePayMethods = $paygateMethodsList->getPaygateMethodsList();
 
         // Buyer details
         $customer     = new Customer( (int) ( $customer_id ) );
@@ -51,103 +58,52 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $this->context->cookie->reference  = $reference;
         $amount                            = filter_var( $total * 100, FILTER_SANITIZE_NUMBER_INT );
         $currency                          = filter_var( $currency->iso_code, FILTER_SANITIZE_STRING );
-        $returnUrl                         = filter_var( $this->context->link->getModuleLink( $this->module->name, 'confirmation', ['secure_key' => $secure_key], true ), FILTER_SANITIZE_URL );
+        $returnUrl                         = filter_var( $this->context->link->getModuleLink( $this->module->name, 'confirmation', ['secure_key' => $secure_key, 'cart_id' => $cart_id], true ), FILTER_SANITIZE_URL );
         $transDate                         = filter_var( date( 'Y-m-d H:i:s' ), FILTER_SANITIZE_STRING );
         $locale                            = filter_var( $iso_code, FILTER_SANITIZE_STRING );
         $country                           = filter_var( $country_code3, FILTER_SANITIZE_STRING );
         $email                             = filter_var( $customer->email, FILTER_SANITIZE_EMAIL );
-        $payMethod                         = '';
-        $payMethodDetail                   = '';
         $notifyUrl                         = filter_var( $this->context->link->getModuleLink( $this->module->name, 'validate', array(), true ), FILTER_SANITIZE_STRING );
         $userField1                        = $cart_id;
         $userField2                        = $secure_key;
         $userField3                        = $this->module->id;
-        $doVault                           = '';
-        $vaultID                           = '';
         $encryption_key                    = Configuration::get( 'PAYGATE_ENCRYPTION_KEY' );
 
-        $checksum_source = $paygateID . $reference . $amount . $currency . $returnUrl . $transDate;
-
-        if ( $locale ) {
-            $checksum_source .= $locale;
-        }
-
-        if ( $country ) {
-            $checksum_source .= $country;
-        }
-
-        if ( $email ) {
-            $checksum_source .= $email;
-        }
-
-        if ( $payMethod ) {
-            $checksum_source .= $payMethod;
-        }
-
-        if ( $payMethodDetail ) {
-            $checksum_source .= $payMethodDetail;
-        }
-
-        if ( $notifyUrl ) {
-            $checksum_source .= $notifyUrl;
-        }
-
-        if ( $userField1 ) {
-            $checksum_source .= $userField1;
-        }
-
-        if ( $userField2 ) {
-            $checksum_source .= $userField2;
-        }
-
-        if ( $userField3 ) {
-            $checksum_source .= $userField3;
-        }
-
-        if ( $doVault != '' ) {
-            $checksum_source .= $doVault;
-        }
-
-        if ( $vaultID != '' ) {
-            $checksum_source .= $vaultID;
-        }
-
-        $checksum_source .= $encryption_key;
-
-        $checksum     = md5( $checksum_source );
-        $returnUrl    = urlencode( $returnUrl );
-        $notifyUrl    = urlencode( $notifyUrl );
         $initiateData = array(
             'PAYGATE_ID'        => $paygateID,
             'REFERENCE'         => $reference,
             'AMOUNT'            => $amount,
             'CURRENCY'          => $currency,
-            'RETURN_URL'        => $returnUrl,
+            'RETURN_URL'        => urlencode($returnUrl),
             'TRANSACTION_DATE'  => $transDate,
             'LOCALE'            => $locale,
             'COUNTRY'           => $country,
             'EMAIL'             => $email,
-            'PAY_METHOD'        => $payMethod,
-            'PAY_METHOD_DETAIL' => $payMethodDetail,
+            'PAY_METHOD' => 'CC',
             'NOTIFY_URL'        => $notifyUrl,
             'USER1'             => $userField1,
             'USER2'             => $userField2,
-            'USER3'             => $userField3,
-            'VAULT'             => $doVault,
-            'VAULT_ID'          => $vaultID,
-            'CHECKSUM'          => $checksum,
+            'USER3'             => $userField3
         );
 
-        $fields_string = '';
-
-        // Url-ify the data for the POST
-        foreach ( $initiateData as $key => $value ) {
-            $fields_string .= $key . '=' . $value . '&';
+        // Do not add notify return url if it is not enabled
+        if(Configuration::get('PAYGATE_IPN_TOGGLE')){
+            unset($initiateData['NOTIFY_URL']);
         }
 
-        $fields_string = rtrim( $fields_string, '&' );
+        if(isset($_POST['paygatePayMethodRadio'])){
+            $payMethod = $this->paygatePayMethods[$_POST['paygatePayMethodRadio']]['ptype'];
+            if($payMethod !== null){
+                $initiateData['PAY_METHOD'] = $payMethod;
+            }
+        }
 
-        $responseData = '';
+        $checksum_source = '';
+        foreach ($initiateData as $initiateDatum){
+            $checksum_source .= $initiateDatum;
+        }
+        $checksum_source .= $encryption_key;
+        $initiateData['CHECKSUM'] = md5($checksum_source);
 
         try {
             // Open connection
@@ -158,7 +114,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             curl_setopt( $ch, CURLOPT_NOBODY, false );
             curl_setopt( $ch, CURLOPT_REFERER, $_SERVER['HTTP_HOST'] );
             curl_setopt( $ch, CURLOPT_POST, 1 );
-            curl_setopt( $ch, CURLOPT_POSTFIELDS, $fields_string );
+            curl_setopt( $ch, CURLOPT_POSTFIELDS, $initiateData );
 
             // Execute post
             $result = curl_exec( $ch );
@@ -167,7 +123,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             curl_close( $ch );
 
         } catch ( Exception $e ) {
-
+            echo $e->getMessage();
         }
 
         $r = [];
