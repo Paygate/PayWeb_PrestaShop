@@ -1,11 +1,11 @@
 {*
- * Copyright (c) 2020 PayGate (Pty) Ltd
+ * Copyright (c) 2021 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
- * 
+ *
  * Released under the GNU General Public License
  *}
-{extends file='page.tpl'} 
+{extends file='page.tpl'}
 {block name='content'}
 <div class="card">
     <div class="card-block">
