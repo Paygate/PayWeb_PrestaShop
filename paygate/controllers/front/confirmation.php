@@ -39,7 +39,7 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
         $pg_key    = Configuration::get('PAYGATE_ENCRYPTION_KEY');
         $reference = $this->context->cookie->reference;
 
-        if (!$this->isResponseValid($cart)) {
+        if ( ! $this->isResponseValid($cart)) {
             Tools::redirect(
                 $this->context->link->getPageLink(
                     'cart',
@@ -64,28 +64,28 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
 
                 $result = $this->makeQueryRequest($fieldsString);
 
-                if (!empty($result)) {
+                if ( ! empty($result)) {
                     // Update purchase status
                     $extra_vars['transaction_id'] = $result['USER1'];
-                    $method_name = $this->module->displayName;
-                        if (!$order) {
-                            $this->module->validateOrder(
-                                (int)$cart->id,
-                                _PS_OS_PAYMENT_,
-                                (float)($result['AMOUNT'] / 100.0),
-                                $method_name,
-                                NULL,
-                                $extra_vars,
-                                NULL,
-                                false,
-                                $cart->secure_key
-                            );
-                        } else {
-                        if(!$order->hasBeenPaid()) {
+                    $method_name                  = $this->module->displayName;
+                    if ( ! $order) {
+                        $this->module->validateOrder(
+                            (int)$cart->id,
+                            _PS_OS_PAYMENT_,
+                            (float)($result['AMOUNT'] / 100.0),
+                            $method_name,
+                            null,
+                            $extra_vars,
+                            null,
+                            false,
+                            $cart->secure_key
+                        );
+                    } else {
+                        if ( ! $order->hasBeenPaid()) {
                             $order->addOrderPayment(
                                 (float)($result['AMOUNT'] / 100.0),
                                 $method_name,
-                                $result['USER1'] 
+                                $result['USER1']
                             );
                         }
                     }
@@ -131,9 +131,10 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
         $pg_id        = Configuration::get('PAYGATE_ID');
         $pg_key       = Configuration::get('PAYGATE_ENCRYPTION_KEY');
         $our_checksum = md5($pg_id . implode('', $post) . $reference . $pg_key);
-        if (!hash_equals($pg_checksum, $our_checksum)) {
+        if ( ! hash_equals($pg_checksum, $our_checksum)) {
             return false;
         }
+
         return true;
     }
 

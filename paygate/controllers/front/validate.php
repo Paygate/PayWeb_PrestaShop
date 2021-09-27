@@ -19,13 +19,13 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         $notify_data = array();
 
         // Sanitize POST data
-        foreach ($_POST as $key => $value){
+        foreach ($_POST as $key => $value) {
             $notify_data[$key] = stripslashes($value);
         }
 
         $this->module->logData("=========Notify Response: " . date('Y-m-d H:i:s') . "============\n\n");
 
-        if (!$this->validateResponse()) {
+        if ( ! $this->validateResponse()) {
             // Notify PayGate that information has been received
             die('OK');
         }
@@ -52,23 +52,23 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
                 }
 
                 // Update the purchase status
-                if (!$order) {
+                if ( ! $order) {
                     $extra_vars['transaction_id'] = $notify_data['USER1'];
                     $this->module->validateOrder(
                         (int)$cart->id,
                         _PS_OS_PAYMENT_,
                         (float)($notify_data['AMOUNT'] / 100.0),
                         $method_name,
-                        NULL,
+                        null,
                         $extra_vars,
-                        NULL,
+                        null,
                         false,
                         $cart->secure_key
                     );
                 } else {
                     $order->addOrderPayment(
-                        (float)($notify_data['AMOUNT'] / 100.0), 
-                        $method_name, 
+                        (float)($notify_data['AMOUNT'] / 100.0),
+                        $method_name,
                         $notify_data['USER1']
                     );
                 }
@@ -119,8 +119,9 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         $checkSumParams .= Configuration::get('ENCRYPTION_KEY');
         // Verify security signature
         $checkSumParams = md5($checkSumParams);
-        if (!hash_equals($checkSumParams, $_POST['CHECKSUM'])) {
+        if ( ! hash_equals($checkSumParams, $_POST['CHECKSUM'])) {
             $this->module->logData('Invalid checksum, checksum: ' . $checkSumParams);
+
             return false;
         }
     }
