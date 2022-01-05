@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -73,12 +73,12 @@ class PaygateMethodsList
                 'ptypedetail' => 'Momopay',
                 'type'        => 'radio',
             ],
-            'masterpass'   => [
+            'scantopay'   => [
                 'name'        => 'paygate-paymethod',
-                'label'       => 'MasterPass',
-                'img'         => '../modules/paygate/assets/images/masterpass.svg',
+                'label'       => 'ScanToPay',
+                'img'         => '../modules/paygate/assets/images/scan-to-pay.svg',
                 'ptype'       => 'EW',
-                'ptypedetail' => 'MasterPass',
+                'ptypedetail' => 'ScanToPay',
                 'type'        => 'radio',
             ],
         ];

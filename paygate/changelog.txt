@@ -2,6 +2,8 @@
 Date	  : Version: Description
 =====================================
 
+2022-01-05: v1.8.1 : Update Masterpass to Scan to Pay.
+
 2021-09-27: v1.8.0 : Add PayPal payment type.
                      Fix issues with wallet payment types.
                      Tested with 1.7.7.8.

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2021 PayGate (Pty) Ltd
+ * Copyright (c) 2022 PayGate (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -27,7 +27,7 @@ class Paygate extends PaymentModule
         require_once _PS_MODULE_DIR_ . 'paygate/classes/methods.php';
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.8.0';
+        $this->version     = '1.8.1';
         $this->author      = 'PayGate';
         $this->controllers = array('payment', 'validation');
 
@@ -416,9 +416,9 @@ HTML;
                                     'val'  => 'momopay',
                                 ),
                                 array(
-                                    'id'   => 'masterpass',
-                                    'name' => 'MasterPass<img src="../modules/paygate/assets/images/masterpass.svg" alt="MasterPass" style="height: 15px; margin-left: 10px;">',
-                                    'val'  => 'masterpass',
+                                    'id'   => 'scantopay',
+                                    'name' => 'ScanToPay<img src="../modules/paygate/assets/images/scan-to-pay.svg" alt="ScanToPay" style="height: 15px; margin-left: 10px;">',
+                                    'val'  => 'scantopay',
                                 ),
                             ),
                             'id'    => 'id',
@@ -508,10 +508,10 @@ HTML;
                     'PAYGATE_PAYMENT_METHODS_momopay'
                 )
             ),
-            'PAYGATE_PAYMENT_METHODS_masterpass'   => Tools::getValue(
-                'PAYGATE_PAYMENT_METHODS_masterpass',
+            'PAYGATE_PAYMENT_METHODS_scantopay'   => Tools::getValue(
+                'PAYGATE_PAYMENT_METHODS_scantopay',
                 Configuration::get(
-                    'PAYGATE_PAYMENT_METHODS_masterpass'
+                    'PAYGATE_PAYMENT_METHODS_scantopay'
                 )
             ),
         );
@@ -904,8 +904,8 @@ HTML;
                 Tools::getValue('PAYGATE_PAYMENT_METHODS_momopay')
             );
             Configuration::updateValue(
-                'PAYGATE_PAYMENT_METHODS_masterpass',
-                Tools::getValue('PAYGATE_PAYMENT_METHODS_masterpass')
+                'PAYGATE_PAYMENT_METHODS_scantopay',
+                Tools::getValue('PAYGATE_PAYMENT_METHODS_scantopay')
             );
         }
         $this->_html .= $this->displayConfirmation(
