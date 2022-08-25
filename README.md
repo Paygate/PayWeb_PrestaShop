@@ -1,7 +1,7 @@
 # PayWeb_PrestaShop_1.7
 ## PayGate PrestaShop plugin v1.8.1 for PrestaShop v 1.7.7.x
 
-This is the PayGate PayWeb3 plugin for PrestaShop. Please feel free to contact the PayGate support team at support@paygate.co.za should you require any assistance.
+This is the PayGate PayWeb3 plugin for PrestaShop. Please feel free to contact the PayGate support team at supportsa@dpogroup.com should you require any assistance.
 
 ## Installation
 [![How To Setup PayGate PayWeb for PrestaShop 1.7](https://appinlet.com/wp-content/uploads/2021/01/How-To-Setup-PayGate-PayWeb-for-PrestaShop-1.7.jpg)](https://www.youtube.com/watch?v=H3e624nH5Wk "How To Setup PayGate PayWeb for PrestaShop 1.7")
