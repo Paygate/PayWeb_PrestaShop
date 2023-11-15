@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
 /*
- * Copyright (c) 2022 PayGate (Pty) Ltd
+ * Copyright (c) 2023 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -10,10 +10,10 @@
 -->
 <module>
     <name>paygate</name>
-    <displayName><![CDATA[PayGate]]></displayName>
-    <version><![CDATA[1.7.9]]></version>
-    <description><![CDATA[Accept payments via PayGate.]]></description>
-    <author><![CDATA[PayGate]]></author>
+    <displayName><![CDATA[Paygate]]></displayName>
+    <version><![CDATA[1.8.2]]></version>
+    <description><![CDATA[Accept payments via Paygate.]]></description>
+    <author><![CDATA[Paygate]]></author>
     <tab><![CDATA[payments_gateways]]></tab>
     <confirmUninstall><![CDATA[Are you sure you want to delete your details ?]]></confirmUninstall>
     <is_configurable>1</is_configurable>

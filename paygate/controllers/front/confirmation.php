@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2022 PayGate (Pty) Ltd
+ * Copyright (c) 2023 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -17,7 +17,10 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
     public function initContent()
     {
         parent::initContent();
-        $cart = new Cart($this->context->cookie->cart_id);
+        $cart_id = $_GET['cart_id'];
+        $this->context->cart = new Cart($cart_id);
+        $this->context->cookie->id_cart = $cart_id;
+        $cart = $this->context->cart;
 
         $order = Order::getByCartId($cart->id);
 
@@ -30,16 +33,18 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
                     'order-confirmation',
                     null,
                     null,
-                    'key=' . $cart->secure_key . '&id_cart=' . (int)($cart->id) . '&id_module=' . (int)($this->module->id)
+                    'key=' . $cart->secure_key . '&id_cart=' . (int)($cart_id) . '&id_module=' . (int)($this->module->id)
                 )
             );
         }
 
         $pg_id     = Configuration::get('PAYGATE_ID');
         $pg_key    = Configuration::get('PAYGATE_ENCRYPTION_KEY');
-        $reference = $this->context->cookie->reference;
+        $sql           = 'SELECT date_time FROM `' . _DB_PREFIX_ . 'paygate` WHERE cart_id = ' . (int)$cart_id . ';';
+        $date         = json_decode(Db::getInstance()->getValue($sql))->date;
+        $reference = $cart_id . '_' . explode(' ', $date)[0];
 
-        if ( ! $this->isResponseValid($cart)) {
+        if ( ! $this->isResponseValid($cart, $reference)) {
             Tools::redirect(
                 $this->context->link->getPageLink(
                     'cart',
@@ -49,10 +54,9 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
                 )
             );
         }
-
         switch ($_POST['TRANSACTION_STATUS']) {
             case '1':
-                // Make POST request to PayGate to query the transaction and get full response data
+                // Make POST request to Paygate to query the transaction and get full response data
                 $post = $_POST;
 
                 $data                   = [];
@@ -69,6 +73,7 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
                     $extra_vars['transaction_id'] = $result['USER1'];
                     $method_name                  = $this->module->displayName;
                     if ( ! $order) {
+                        /** @noinspection PhpUndefinedConstantInspection */
                         $this->module->validateOrder(
                             (int)$cart->id,
                             _PS_OS_PAYMENT_,
@@ -119,18 +124,18 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
         $this->setTemplate('module:paygate/views/templates/front/confirmation.tpl');
     }
 
-    private function isResponseValid($cart)
+    private function isResponseValid($cart, $reference)
     {
         $key = Tools::getValue('secure_key');
-        if ($key != $cart->secure_key || empty($_POST['TRANSACTION_STATUS'])) {
+        if ($key != $this->context->cart->secure_key || empty($_POST['TRANSACTION_STATUS'])) {
             return false;
         }
         $post         = $_POST;
         $pg_checksum  = array_pop($post);
-        $reference    = $this->context->cookie->reference;
         $pg_id        = Configuration::get('PAYGATE_ID');
         $pg_key       = Configuration::get('PAYGATE_ENCRYPTION_KEY');
         $our_checksum = md5($pg_id . implode('', $post) . $reference . $pg_key);
+
         if ( ! hash_equals($pg_checksum, $our_checksum)) {
             return false;
         }

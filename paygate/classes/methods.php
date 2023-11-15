@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022 PayGate (Pty) Ltd
+ * Copyright (c) 2023 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -13,7 +13,7 @@ class PaygateMethodsList
 
     public function getPaygateMethodsList()
     {
-        return $paygatePayMethods = [
+        return  [
             'creditcard'   => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'Card',
@@ -78,7 +78,7 @@ class PaygateMethodsList
                 'label'       => 'ScanToPay',
                 'img'         => '../modules/paygate/assets/images/scan-to-pay.svg',
                 'ptype'       => 'EW',
-                'ptypedetail' => 'ScanToPay',
+                'ptypedetail' => 'MasterPass',
                 'type'        => 'radio',
             ],
         ];

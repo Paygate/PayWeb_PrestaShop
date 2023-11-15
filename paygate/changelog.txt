@@ -2,6 +2,9 @@
 Date	  : Version: Description
 =====================================
 
+2023-11-15: v1.8.2 : Update for PHP 8.0.
+                     Test on Prestashop 8.1.2.
+
 2022-01-05: v1.8.1 : Update Masterpass to Scan to Pay.
 
 2021-09-27: v1.8.0 : Add PayPal payment type.
