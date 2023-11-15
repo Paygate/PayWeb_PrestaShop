@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2022 PayGate (Pty) Ltd
+ * Copyright (c) 2023 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -26,7 +26,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         $this->module->logData("=========Notify Response: " . date('Y-m-d H:i:s') . "============\n\n");
 
         if ( ! $this->validateResponse()) {
-            // Notify PayGate that information has been received
+            // Notify Paygate that information has been received
             die('OK');
         }
 
@@ -38,7 +38,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         $method_name = $this->module->displayName;
 
         if ($notify_data['PAY_METHOD_DETAIL'] != '') {
-            $method_name = 'PayGate';
+            $method_name = 'Paygate';
         }
         switch ($notify_data['TRANSACTION_STATUS']) {
             case '1':
@@ -54,6 +54,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
                 // Update the purchase status
                 if ( ! $order) {
                     $extra_vars['transaction_id'] = $notify_data['USER1'];
+                    /** @noinspection PhpUndefinedConstantInspection */
                     $this->module->validateOrder(
                         (int)$cart->id,
                         _PS_OS_PAYMENT_,
@@ -90,7 +91,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         }
 
 
-        // Notify PayGate that information has been received
+        // Notify Paygate that information has been received
         die('OK');
     }
 

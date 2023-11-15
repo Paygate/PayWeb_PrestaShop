@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2022 PayGate (Pty) Ltd
+ * Copyright (c) 2023 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -16,8 +16,11 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
     {
         parent::initContent();
 
+        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . $this->module->name . '/classes/countries.php';
+        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . $this->module->name . '/classes/methods.php';
+        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . $this->module->name . '/paygate.php';
 
         $iso_code    = $this->context->language->iso_code;
@@ -37,6 +40,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $country_code2 = $country->getIsoById($user_address->id_country);
         $countries     = new CountriesArray();
         $country_code3 = $countries->getCountryDetails($country_code2);
+        /** @noinspection PhpUndefinedConstantInspection */
         $sql           = 'SELECT cart_total FROM `' . _DB_PREFIX_ . 'paygate` WHERE cart_id = ' . (int)$cart_id . ';';
         $total         = Db::getInstance()->getValue($sql);
         $data          = array();
@@ -55,7 +59,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $this->context->cookie->cart_id    = $cart_id;
         $paygateID                         = filter_var(Configuration::get('PAYGATE_ID'), FILTER_SANITIZE_STRING);
         $reference                         = filter_var(
-            $cart_id . '_' . $dateTime->format('Y-m-d H:i:s'),
+            $cart_id . '_' . $dateTime->format('Y-m-d'),
             FILTER_SANITIZE_STRING
         );
         $this->context->cookie->reference  = $reference;

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2022 PayGate (Pty) Ltd
+ * Copyright (c) 2023 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -24,11 +24,12 @@ class Paygate extends PaymentModule
 
     public function __construct()
     {
+        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . 'paygate/classes/methods.php';
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.8.1';
-        $this->author      = 'PayGate';
+        $this->version     = '1.8.2';
+        $this->author      = 'Paygate';
         $this->controllers = array('payment', 'validation');
 
         $paygateMethodsList      = new PaygateMethodsList();
@@ -37,18 +38,21 @@ class Paygate extends PaymentModule
         $this->bootstrap = true;
         parent::__construct();
 
-        $this->displayName            = $this->trans('PayGate', array(), self::PAYGATE_ADMIN);
-        $this->description            = $this->trans('Accept payments via PayGate.', array(), self::PAYGATE_ADMIN);
+        $this->displayName            = $this->trans('Paygate', array(), self::PAYGATE_ADMIN);
+        $this->description            = $this->trans('Accept payments via Paygate.', array(), self::PAYGATE_ADMIN);
         $this->confirmUninstall       = $this->trans(
             'Are you sure you want to delete your details ?',
             array(),
             self::PAYGATE_ADMIN
         );
+        /** @noinspection PhpUndefinedConstantInspection */
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
     }
 
     public function install()
     {
+        /** @noinspection PhpUndefinedConstantInspection */
+        /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paygate` (
                                 `cart_id` INT NOT NULL,
@@ -69,6 +73,7 @@ class Paygate extends PaymentModule
 
     public function uninstall()
     {
+        /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paygate`');
 
         return (parent::uninstall());
@@ -85,14 +90,14 @@ class Paygate extends PaymentModule
             return [];
         }
 
-        $this->updateOrAddToTable();
+        $this->updateOrAddToTable($params);
         $this->clearOldOrders();
 
         // Get and display Pay Methods set in configuration
         $action         = $this->context->link->getModuleLink($this->name, 'payment', [], true);
         $payOptionsHtml = <<<HTML
 <form method="post" action="$action">
-<p>Make Payment Via PayGate</p>
+<p>Make Payment Via Paygate</p>
 HTML;
         $pt             = 0;
         foreach ($this->paygatePayMethods as $key => $paygatePayMethod) {
@@ -104,7 +109,7 @@ HTML;
 
         if ($pt > 0) {
             $payOptionsHtml .= <<<HTML
-<p>Choose a PayGate Payment Method below:</p>
+<p>Choose a Paygate Payment Method below:</p>
 HTML;
         }
         $i = 0;
@@ -132,7 +137,8 @@ HTML;
         $payOptionsHtml .= '</form>';
 
         $paymentOption = new PaymentOption();
-        $paymentOption->setCallToActionText('Pay via PayGate')
+        /** @noinspection PhpUndefinedConstantInspection */
+        $paymentOption->setCallToActionText('Pay via Paygate')
                       ->setForm($payOptionsHtml)
                       ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo.png'))
                       ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true));
@@ -143,6 +149,7 @@ HTML;
 
     public function clearOldOrders()
     {
+        /** @noinspection PhpUndefinedConstantInspection */
         $sql     = 'SELECT `cart_id` FROM ' . _DB_PREFIX_ . 'paygate;';
         $results = Db::getInstance()->ExecuteS($sql);
         foreach ($results as $id) {
@@ -155,6 +162,7 @@ HTML;
             }
         }
 
+        /** @noinspection PhpUndefinedConstantInspection */
         $sql2     = 'SELECT `cart_id`,`date_time` FROM ' . _DB_PREFIX_ . 'paygate;';
         $results2 = Db::getInstance()->ExecuteS($sql2);
         foreach ($results2 as $cart) {
@@ -171,9 +179,10 @@ HTML;
         }
     }
 
-    public function updateOrAddToTable()
+    public function updateOrAddToTable($params)
     {
-        global $cart;
+        global $cookie;
+        $cart = $params['cart'];
         $cart_id                   = $cart->id;
         $cart_total                = $cart->getOrderTotal();
         $cart_delivery_option      = $cart->getDeliveryOption();
@@ -199,6 +208,9 @@ HTML;
             foreach ($packageByAddress as $id_package => $package) {
                 $product_list = $package['product_list'];
                 $carrierId    = isset($package['id_carrier']) ? $package['id_carrier'] : null;
+                /** @noinspection PhpUndefinedConstantInspection */
+                /** @noinspection PhpUndefinedConstantInspection */
+                /** @noinspection PhpUndefinedConstantInspection */
                 $totals       = array(
                     "total_products"           => (float)$cart->getOrderTotal(
                         false,
@@ -264,8 +276,10 @@ HTML;
             }
         }
 
+        /** @noinspection PhpUndefinedVariableInspection */
         $total = json_encode($totals, JSON_NUMERIC_CHECK);
 
+        /** @noinspection PhpUndefinedConstantInspection */
         $check_if_row_exists = Db::getInstance()->getValue(
             'SELECT cart_id FROM ' . _DB_PREFIX_ . 'paygate WHERE cart_id="' . (int)$cart_id . '"'
         );
@@ -330,7 +344,7 @@ HTML;
                 'input'  => array(
                     array(
                         'type'     => 'text',
-                        'label'    => $this->trans('PayGate ID', array(), self::PAYGATE_ADMIN),
+                        'label'    => $this->trans('Paygate ID', array(), self::PAYGATE_ADMIN),
                         'name'     => 'PAYGATE_ID',
                         'required' => true,
                     ),
@@ -565,6 +579,7 @@ HTML;
             $order->id_carrier = 0;
             $carrierId         = 0;
         }
+        /** @noinspection PhpUndefinedConstantInspection */
         $sql1  = 'SELECT totals FROM `' . _DB_PREFIX_ . 'paygate` WHERE cart_id = ' . (int)$cart->id . ';';
         $test  = Db::getInstance()->getValue($sql1);
         $test1 = json_decode($test);
@@ -596,6 +611,7 @@ HTML;
         $order->gift_message    = $cart->gift_message;
         $order->mobile_theme    = $cart->mobile_theme;
         $order->conversion_rate = $currency->conversion_rate;
+        /** @noinspection PhpUndefinedConstantInspection */
         $amount_paid            = ! $dont_touch_amount ? Tools::ps_round(
             (float)$amount_paid,
             _PS_PRICE_COMPUTE_PRECISION_
@@ -664,6 +680,7 @@ HTML;
     ) {
         // Prepare cart calculator to correctly get the value of each cart rule
         $calculator = $cart->newCalculator($order->product_list, $cart->getCartRules(), $order->id_carrier);
+        /** @noinspection PhpUndefinedConstantInspection */
         $calculator->processCalculation(_PS_PRICE_COMPUTE_PRECISION_);
         $cartRulesData = $calculator->getCartRulesData();
 
@@ -697,6 +714,7 @@ HTML;
                 );
             }
             $remainingValue = $cartRuleReductionAmountConverted - $values[$cartRule->reduction_tax ? 'tax_incl' : 'tax_excl'];
+            /** @noinspection PhpUndefinedConstantInspection */
             $remainingValue = Tools::ps_round($remainingValue, _PS_PRICE_COMPUTE_PRECISION_);
             if (count(
                     $order_list
@@ -759,7 +777,7 @@ HTML;
             16
         ) : $voucher->code . '-2';
         if (preg_match(
-                '/\-([0-9]{1,2})\-([0-9]{1,2})$/',
+                '/\-(\d{1,2})\-(\d{1,2})$/',
                 $voucher->code,
                 $matches
             ) && $matches[1] == $matches[2]) {
@@ -771,6 +789,7 @@ HTML;
         }
 
         // Set the new voucher value
+        /** @noinspection PhpUndefinedVariableInspection */
         $voucher = $this->setNewVoucherValue($voucher, $remainingValue, $order);
 
         $voucher->quantity           = 1;
@@ -793,6 +812,7 @@ HTML;
                 '{id_order}'       => $order->reference,
                 '{order_name}'     => $order->getUniqReference(),
             );
+            /** @noinspection PhpUndefinedConstantInspection */
             Mail::Send(
                 (int)$order->id_lang,
                 'voucher',
@@ -854,7 +874,7 @@ HTML;
         if (Tools::isSubmit('btnSubmit')) {
             if ( ! Tools::getValue('PAYGATE_ID')) {
                 $this->_postErrors[] = $this->trans(
-                    'The "PayGate ID" field is required.',
+                    'The "Paygate ID" field is required.',
                     array(),
                     self::PAYGATE_ADMIN
                 );
