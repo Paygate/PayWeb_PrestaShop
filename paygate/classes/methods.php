@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -19,7 +19,7 @@ class PaygateMethodsList
                 'label'       => 'Card',
                 'img'         => '../modules/paygate/assets/images/mastercard-visa.svg',
                 'ptype'       => 'CC',
-                'ptypedetail' => 'Card',
+                'ptypedetail' => 'Credit Card',
                 'type'        => 'radio',
                 'value'       => 'creditcard',
                 'title'       => 'Card',
@@ -79,6 +79,30 @@ class PaygateMethodsList
                 'img'         => '../modules/paygate/assets/images/scan-to-pay.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'MasterPass',
+                'type'        => 'radio',
+            ],
+            'applepay'   => [
+                'name'        => 'paygate-paymethod',
+                'label'       => 'ApplePay',
+                'img'         => '../modules/paygate/assets/images/apple-pay.svg',
+                'ptype'       => 'CC',
+                'ptypedetail' => 'Applepay',
+                'type'        => 'radio',
+            ],
+            'rcs'   => [
+                'name'        => 'paygate-paymethod',
+                'label'       => 'RCS',
+                'img'         => '../modules/paygate/assets/images/rcs.svg',
+                'ptype'       => 'EW',
+                'ptypedetail' => 'RCS',
+                'type'        => 'radio',
+            ],
+            'samsungpay'   => [
+                'name'        => 'paygate-paymethod',
+                'label'       => 'SamsungPay',
+                'img'         => '../modules/paygate/assets/images/samsung-pay.svg',
+                'ptype'       => 'EW',
+                'ptypedetail' => 'Samsungpay',
                 'type'        => 'radio',
             ],
         ];

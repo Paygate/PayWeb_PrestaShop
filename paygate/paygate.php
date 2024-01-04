@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -13,6 +13,7 @@ if ( ! defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once _PS_MODULE_DIR_ . 'paygate/classes/PayVault.php';
 
 class Paygate extends PaymentModule
 {
@@ -28,7 +29,7 @@ class Paygate extends PaymentModule
         require_once _PS_MODULE_DIR_ . 'paygate/classes/methods.php';
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.8.2';
+        $this->version     = '1.8.3';
         $this->author      = 'Paygate';
         $this->controllers = array('payment', 'validation');
 
@@ -66,15 +67,31 @@ class Paygate extends PaymentModule
             '
         );
 
+        /** @noinspection PhpUndefinedConstantInspection */
+        Db::getInstance()->execute(
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paygate_vaults` (
+                `id_vault` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `id_customer` INT UNSIGNED NOT NULL,
+                `vault_id` VARCHAR(40) NOT NULL,
+                `first_six` VARCHAR(10) NOT NULL,        
+                `last_four` VARCHAR(10) NOT NULL,
+                `expiry` VARCHAR(10) NOT NULL
+                ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;   
+            '
+        );
+
         return parent::install()
                && $this->registerHook('paymentOptions')
-               && $this->registerHook('paymentReturn');
+               && $this->registerHook('paymentReturn')
+               && $this->registerHook('displayCustomerAccount');
     }
 
     public function uninstall()
     {
         /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paygate`');
+        /** @noinspection PhpUndefinedConstantInspection */
+        Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paygate_vaults`');
 
         return (parent::uninstall());
     }
@@ -89,6 +106,9 @@ class Paygate extends PaymentModule
         if ( ! $this->active) {
             return [];
         }
+
+        $cart = $params['cart'];
+        $customer = new Customer($cart->id_customer);
 
         $this->updateOrAddToTable($params);
         $this->clearOldOrders();
@@ -110,6 +130,9 @@ HTML;
         if ($pt > 0) {
             $payOptionsHtml .= <<<HTML
 <p>Choose a Paygate Payment Method below:</p>
+<table>
+<thead><tr><td></td><td></td></tr></thead>
+<tbody>
 HTML;
         }
         $i = 0;
@@ -119,12 +142,19 @@ HTML;
             $i++;
             if (Configuration::get($k) != '') {
                 $payOptionsHtml .= <<<HTML
-<p><input type="radio" value="$key" name="paygatePayMethodRadio" {{ $checked }}>
-{$paygatePayMethod['label']}
-<img src="{$paygatePayMethod['img']}" alt="{$paygatePayMethod['label']}" height="15px;"></p>
+<tr>
+<td><input type="radio" value="$key" name="paygatePayMethodRadio" {{ $checked }}>
+{$paygatePayMethod['label']}</td>
+<td style="text-align: right;"><img src="{$paygatePayMethod['img']}" alt="{$paygatePayMethod['label']}" height="15px;"></td>
+</tr>
 HTML;
             }
         }
+
+        $payOptionsHtml .= <<<HTML
+</tbody>
+</table>
+HTML;
 
         $inputs = [];
         foreach ($this->paygatePayMethods as $key => $paygatePayMethod) {
@@ -134,7 +164,65 @@ HTML;
             }
         }
 
+        // Add vaulting options - card only
+        $customerId = $params['cart']->id_customer;
+        if ((int)Configuration::get('PAYGATE_PAY_VAULT') === 1 && !$customer->isGuest()) {
+            $vaults = PayVault::customerVaults($customerId);
+            $payOptionsHtml .= <<<VAULTS
+<div id="paygateVaultOptions" style="display: none;">
+<br><p>Select an option below to save your card details in PayVault:</p>
+<select name="paygateVaultOption">
+<option value="none">Use a new card and don't save the detail</option>
+<option value="new">Use a new card and save the detail</option>
+VAULTS;
+            foreach ($vaults as $vault) {
+                $payOptionsHtml .= <<<OPTION
+<option value="$vault[id_vault]">Use stored card ending with $vault[last_four] expiring $vault[expiry]</option>
+OPTION;
+
+            }
+
+            $payOptionsHtml .= <<<VAULTS
+</select>
+</div>
+VAULTS;
+
+        }
+
         $payOptionsHtml .= '</form>';
+        $payOptionsHtml .= <<<HTML
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+  if (!window.ApplePaySession) {
+    // Apple Pay is not available, so let's hide the specific input element
+    const applePayElement = document.querySelector('input[value="applepay"]');
+    
+    if (applePayElement) {
+    const parentP = applePayElement.closest('tr');
+    if (parentP) {
+        parentP.parentNode.removeChild(parentP);
+        }
+    }
+  }
+
+  let method = document.querySelector('input[name="paygatePayMethodRadio"]:checked').value;
+  if (method === 'creditcard') {
+    document.getElementById('paygateVaultOptions').style.display = 'block';
+  }
+
+  document.body.addEventListener('click', function(event) {
+    if (event.target.name === 'paygatePayMethodRadio') {
+      if (event.target.value === 'creditcard') {
+        document.getElementById('paygateVaultOptions').style.display = 'block';
+      } else {
+        document.getElementById('paygateVaultOptions').style.display = 'none';
+      }
+    }
+  });
+});
+
+</script
+HTML;
 
         $paymentOption = new PaymentOption();
         /** @noinspection PhpUndefinedConstantInspection */
@@ -362,12 +450,12 @@ HTML;
                             array(
                                 'id'    => 'active_on',
                                 'value' => 1,
-                                'label' => $this->trans('IPN', array(), self::PAYGATE_ADMIN),
+                                'label' => $this->trans('Redirect', array(), self::PAYGATE_ADMIN),
                             ),
                             array(
                                 'id'    => 'active_off',
                                 'value' => 0,
-                                'label' => $this->trans('Redirect', array(), self::PAYGATE_ADMIN),
+                                'label' => $this->trans('IPN', array(), self::PAYGATE_ADMIN),
                             ),
                         ),
                     ),
@@ -375,6 +463,23 @@ HTML;
                         'type'   => 'switch',
                         'label'  => $this->trans('Debug', array(), self::PAYGATE_ADMIN),
                         'name'   => 'PAYGATE_LOGS',
+                        'values' => array(
+                            array(
+                                'id'    => 'active_on',
+                                'value' => 1,
+                                'label' => $this->trans('Yes', array(), self::PAYGATE_ADMIN),
+                            ),
+                            array(
+                                'id'    => 'active_off',
+                                'value' => 0,
+                                'label' => $this->trans('No', array(), self::PAYGATE_ADMIN),
+                            ),
+                        ),
+                    ),
+                    array(
+                        'type'   => 'switch',
+                        'label'  => $this->trans('Enable PayVault', array(), self::PAYGATE_ADMIN),
+                        'name'   => 'PAYGATE_PAY_VAULT',
                         'values' => array(
                             array(
                                 'id'    => 'active_on',
@@ -433,6 +538,21 @@ HTML;
                                     'id'   => 'scantopay',
                                     'name' => 'ScanToPay<img src="../modules/paygate/assets/images/scan-to-pay.svg" alt="ScanToPay" style="height: 15px; margin-left: 10px;">',
                                     'val'  => 'scantopay',
+                                ),
+                                array(
+                                    'id'   => 'applepay',
+                                    'name' => 'ApplePay<img src="../modules/paygate/assets/images/apple-pay.svg" alt="ApplePay" style="height: 15px; margin-left: 10px;">',
+                                    'val'  => 'applepay',
+                                ),
+                                array(
+                                    'id'   => 'rcs',
+                                    'name' => 'RCS<img src="../modules/paygate/assets/images/rcs.svg" alt="RCS" style="height: 15px; margin-left: 10px;">',
+                                    'val'  => 'rcs',
+                                ),
+                                array(
+                                    'id'   => 'samsungpay',
+                                    'name' => 'SamsungPay<img src="../modules/paygate/assets/images/samsung-pay.svg" alt="SamsungPay" style="height: 15px; margin-left: 10px;">',
+                                    'val'  => 'samsungpay',
                                 ),
                             ),
                             'id'    => 'id',
@@ -526,6 +646,30 @@ HTML;
                 'PAYGATE_PAYMENT_METHODS_scantopay',
                 Configuration::get(
                     'PAYGATE_PAYMENT_METHODS_scantopay'
+                )
+            ),
+            'PAYGATE_PAYMENT_METHODS_applepay'   => Tools::getValue(
+                'PAYGATE_PAYMENT_METHODS_applepay',
+                Configuration::get(
+                    'PAYGATE_PAYMENT_METHODS_applepay'
+                )
+            ),
+            'PAYGATE_PAYMENT_METHODS_samsungpay'   => Tools::getValue(
+                'PAYGATE_PAYMENT_METHODS_samsungpay',
+                Configuration::get(
+                    'PAYGATE_PAYMENT_METHODS_samsungpay'
+                )
+            ),
+            'PAYGATE_PAYMENT_METHODS_rcs'   => Tools::getValue(
+                'PAYGATE_PAYMENT_METHODS_rcs',
+                Configuration::get(
+                    'PAYGATE_PAYMENT_METHODS_rcs'
+                )
+            ),
+            'PAYGATE_PAY_VAULT'   => Tools::getValue(
+                'PAYGATE_PAY_VAULT',
+                Configuration::get(
+                    'PAYGATE_PAY_VAULT'
                 )
             ),
         );
@@ -927,10 +1071,42 @@ HTML;
                 'PAYGATE_PAYMENT_METHODS_scantopay',
                 Tools::getValue('PAYGATE_PAYMENT_METHODS_scantopay')
             );
+            Configuration::updateValue(
+                'PAYGATE_PAYMENT_METHODS_applepay',
+                Tools::getValue('PAYGATE_PAYMENT_METHODS_applepay')
+            );
+            Configuration::updateValue(
+                'PAYGATE_PAYMENT_METHODS_rcs',
+                Tools::getValue('PAYGATE_PAYMENT_METHODS_rcs')
+            );
+            Configuration::updateValue(
+                'PAYGATE_PAYMENT_METHODS_samsungpay',
+                Tools::getValue('PAYGATE_PAYMENT_METHODS_samsungpay')
+            );
+            Configuration::updateValue(
+                'PAYGATE_PAY_VAULT',
+                Tools::getValue('PAYGATE_PAY_VAULT')
+            );
         }
         $this->_html .= $this->displayConfirmation(
             $this->trans('Settings updated', array(), 'Admin.Notifications.Success')
         );
     }
 
+
+
+    public function hookDisplayCustomerAccount()
+    {
+        $this->context->smarty->assign(
+            'card',
+            $this->context->link->getModuleLink('paygate', 'payvault'),
+        );
+        $this->context->smarty->assign(
+            'tokenization',
+            Configuration::get('PAYGATE_PAY_VAULT'),
+        );
+
+        return $this->context->smarty
+            ->fetch('module:paygate/views/templates/front/payvault.tpl');
+    }
 }
