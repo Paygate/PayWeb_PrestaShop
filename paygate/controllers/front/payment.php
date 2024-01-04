@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -98,7 +98,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             'COUNTRY'           => $country,
             'EMAIL'             => $email,
             'PAY_METHOD'        => 'CC',
-            'PAY_METHOD_DETAIL' => 'Card',
+            'PAY_METHOD_DETAIL' => 'Credit Card',
             'NOTIFY_URL'        => $notifyUrl,
             'USER1'             => $userField1,
             'USER2'             => $userField2,
@@ -116,6 +116,26 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             if ($payMethod !== null) {
                 $initiateData['PAY_METHOD']        = $payMethod;
                 $initiateData['PAY_METHOD_DETAIL'] = $payMethodDetail;
+            }
+        }
+
+        if (Configuration::get('PAYGATE_PAY_VAULT') == 1 && $_POST['paygatePayMethodRadio'] === 'creditcard') {
+            $initiateData['VAULT'] = 1;
+            if (isset($_POST['paygateVaultOption'])) {
+                switch ($_POST['paygateVaultOption']) {
+                    case 'none':
+                        $initiateData['VAULT'] = 0;
+                        break;
+                    case 'new':
+                        $initiateData['VAULT'] = 1;
+                        break;
+                    default:
+                        $initiateData['VAULT']    = 1;
+                        $vault                    = PayVault::customerVault($customer_id, $_POST['paygateVaultOption']);
+                        $initiateData['VAULT_ID'] = $vault;
+                        unset($initiateData['PAY_METHOD_DETAIL']);
+                        break;
+                }
             }
         }
 

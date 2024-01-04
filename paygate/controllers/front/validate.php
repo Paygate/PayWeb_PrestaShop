@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2023 Payfast (Pty) Ltd
+ * Copyright (c) 2024 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -13,19 +13,20 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
     /**
      * Function returned to by IPN if enabled in configuration
      */
-    public function initContent()
+    public function initContent(): void
     {
+        echo 'OK';
+
         parent::initContent();
-        $notify_data = array();
+        $notify_data = [];
 
         // Sanitize POST data
         foreach ($_POST as $key => $value) {
             $notify_data[$key] = stripslashes($value);
         }
 
-        $this->module->logData("=========Notify Response: " . date('Y-m-d H:i:s') . "============\n\n");
-
         if ( ! $this->validateResponse()) {
+            PrestaShopLogger::addLog('Response not validated');
             // Notify Paygate that information has been received
             die('OK');
         }
@@ -52,9 +53,8 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
                 }
 
                 // Update the purchase status
-                if ( ! $order) {
+                if ( empty($order)) {
                     $extra_vars['transaction_id'] = $notify_data['USER1'];
-                    /** @noinspection PhpUndefinedConstantInspection */
                     $this->module->validateOrder(
                         (int)$cart->id,
                         _PS_OS_PAYMENT_,
@@ -74,7 +74,8 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
                     );
                 }
 
-                $this->module->logData("Done updating order status\n\n");
+                PayVault::storeVault($cart->id_customer, $notify_data);
+
                 break;
 
             case '2':
@@ -95,7 +96,10 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         die('OK');
     }
 
-    private function validateResponse()
+    /**
+     * @return bool
+     */
+    private function validateResponse(): bool
     {
         $post_data      = '';
         $checkSumParams = '';
@@ -117,7 +121,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
         $this->module->logData($post_data);
         $this->module->logData("\n");
 
-        $checkSumParams .= Configuration::get('ENCRYPTION_KEY');
+        $checkSumParams .= Configuration::get('PAYGATE_ENCRYPTION_KEY');
         // Verify security signature
         $checkSumParams = md5($checkSumParams);
         if ( ! hash_equals($checkSumParams, $_POST['CHECKSUM'])) {
@@ -125,5 +129,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
 
             return false;
         }
+
+        return true;
     }
 }
