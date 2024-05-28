@@ -93,7 +93,7 @@ class PaygateMethodsList
                 'name'        => 'paygate-paymethod',
                 'label'       => 'RCS',
                 'img'         => '../modules/paygate/assets/images/rcs.svg',
-                'ptype'       => 'EW',
+                'ptype'       => 'CC',
                 'ptypedetail' => 'RCS',
                 'type'        => 'radio',
             ],

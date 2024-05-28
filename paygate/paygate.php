@@ -29,7 +29,7 @@ class Paygate extends PaymentModule
         require_once _PS_MODULE_DIR_ . 'paygate/classes/methods.php';
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.8.3';
+        $this->version     = '1.8.4';
         $this->author      = 'Paygate';
         $this->controllers = array('payment', 'validation');
 
