@@ -29,7 +29,7 @@ class Paygate extends PaymentModule
         require_once _PS_MODULE_DIR_ . 'paygate/classes/methods.php';
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.8.4';
+        $this->version     = '1.8.5';
         $this->author      = 'Paygate';
         $this->controllers = array('payment', 'validation');
 
@@ -166,10 +166,10 @@ HTML;
 
         // Add vaulting options - card only
         $customerId = $params['cart']->id_customer;
-        if ((int)Configuration::get('PAYGATE_PAY_VAULT') === 1 && !$customer->isGuest()) {
+        if ((int)Configuration::get('PAYGATE_PAY_VAULT') === 1 && !$customer->isGuest() && $pt === 0) {
             $vaults = PayVault::customerVaults($customerId);
             $payOptionsHtml .= <<<VAULTS
-<div id="paygateVaultOptions" style="display: none;">
+<div id="paygateVaultOptions">
 <br><p>Select an option below to save your card details in PayVault:</p>
 <select name="paygateVaultOption">
 <option value="none">Use a new card and don't save the detail</option>
@@ -209,16 +209,6 @@ VAULTS;
   if (method === 'creditcard') {
     document.getElementById('paygateVaultOptions').style.display = 'block';
   }
-
-  document.body.addEventListener('click', function(event) {
-    if (event.target.name === 'paygatePayMethodRadio') {
-      if (event.target.value === 'creditcard') {
-        document.getElementById('paygateVaultOptions').style.display = 'block';
-      } else {
-        document.getElementById('paygateVaultOptions').style.display = 'none';
-      }
-    }
-  });
 });
 
 </script

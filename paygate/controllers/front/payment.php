@@ -97,12 +97,6 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             'LOCALE'            => $locale,
             'COUNTRY'           => $country,
             'EMAIL'             => $email,
-            'PAY_METHOD'        => 'CC',
-            'PAY_METHOD_DETAIL' => 'Credit Card',
-            'NOTIFY_URL'        => $notifyUrl,
-            'USER1'             => $userField1,
-            'USER2'             => $userField2,
-            'USER3'             => $userField3
         );
 
         // Do not add notify return url if it is not enabled
@@ -119,7 +113,12 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             }
         }
 
-        if (Configuration::get('PAYGATE_PAY_VAULT') == 1 && $_POST['paygatePayMethodRadio'] === 'creditcard') {
+        $initiateData['NOTIFY_URL']   = $notifyUrl;
+        $initiateData['USER1']        = $userField1;
+        $initiateData['USER2']        = $userField2;
+        $initiateData['USER3']        = $userField3;
+
+        if (Configuration::get('PAYGATE_PAY_VAULT') == 1) {
             $initiateData['VAULT'] = 1;
             if (isset($_POST['paygateVaultOption'])) {
                 switch ($_POST['paygateVaultOption']) {
