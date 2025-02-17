@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -11,7 +11,7 @@
 <module>
     <name>paygate</name>
     <displayName><![CDATA[Paygate]]></displayName>
-    <version><![CDATA[1.8.5]]></version>
+    <version><![CDATA[1.9.0]]></version>
     <description><![CDATA[Accept payments via Paygate.]]></description>
     <author><![CDATA[Paygate]]></author>
     <tab><![CDATA[payments_gateways]]></tab>

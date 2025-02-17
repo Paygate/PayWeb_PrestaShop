@@ -1,26 +1,31 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
 
+use Payfast\PayfastCommon\Gateway\Request\PaymentRequest;
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+
 class PaygatePaymentModuleFrontController extends ModuleFrontController
 {
-    protected $vaultableMethods = ['creditcard'];
-    protected $paygatePayMethods = [];
+    protected array $vaultableMethods = ['creditcard'];
+    protected array $paygatePayMethods = [];
 
-    public function initContent()
+    /**
+     * @throws PrestaShopException
+     * @throws PrestaShopDatabaseException
+     */
+    public function initContent(): void
     {
         parent::initContent();
 
-        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . $this->module->name . '/classes/countries.php';
-        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . $this->module->name . '/classes/methods.php';
-        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . $this->module->name . '/paygate.php';
 
         $iso_code    = $this->context->language->iso_code;
@@ -32,7 +37,7 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $this->paygatePayMethods = $paygateMethodsList->getPaygateMethodsList();
 
         // Buyer details
-        $customer     = new Customer((int)($customer_id));
+        $customer     = new Customer($customer_id);
         $user_address = new Address(intval($this->context->cart->id_address_invoice));
 
         // Retrieve country codes
@@ -40,16 +45,15 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $country_code2 = $country->getIsoById($user_address->id_country);
         $countries     = new CountriesArray();
         $country_code3 = $countries->getCountryDetails($country_code2);
-        /** @noinspection PhpUndefinedConstantInspection */
         $sql           = 'SELECT cart_total FROM `' . _DB_PREFIX_ . 'paygate` WHERE cart_id = ' . (int)$cart_id . ';';
         $total         = Db::getInstance()->getValue($sql);
         $data          = array();
-        $currency      = new Currency((int)$this->context->cart->id_currency);
+        $currency      = new Currency($this->context->cart->id_currency);
 
         if ($this->context->cart->id_currency != $currency->id) {
             // If paygate currency differs from local currency
             $this->context->cart->id_currency   = (int)$currency->id;
-            $this->context->cookie->id_currency = (int)$this->context->cart->id_currency;
+            $this->context->cookie->id_currency = $this->context->cart->id_currency;
             $this->context->cart->update();
         }
 
@@ -57,14 +61,14 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
         $time                              = $dateTime->format('YmdHis');
         $this->context->cookie->order_time = $time;
         $this->context->cookie->cart_id    = $cart_id;
-        $paygateID                         = filter_var(Configuration::get('PAYGATE_ID'), FILTER_SANITIZE_STRING);
+        $paygateID                         = filter_var(Configuration::get('PAYGATE_ID'), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $reference                         = filter_var(
             $cart_id . '_' . $dateTime->format('Y-m-d'),
-            FILTER_SANITIZE_STRING
+            FILTER_SANITIZE_FULL_SPECIAL_CHARS
         );
         $this->context->cookie->reference  = $reference;
         $amount                            = filter_var($total * 100, FILTER_SANITIZE_NUMBER_INT);
-        $currency                          = filter_var($currency->iso_code, FILTER_SANITIZE_STRING);
+        $currency                          = filter_var($currency->iso_code, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $returnUrl                         = filter_var(
             $this->context->link->getModuleLink(
                 $this->module->name,
@@ -74,21 +78,20 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             ),
             FILTER_SANITIZE_URL
         );
-        $transDate                         = filter_var(date('Y-m-d H:i:s'), FILTER_SANITIZE_STRING);
-        $locale                            = filter_var($iso_code, FILTER_SANITIZE_STRING);
-        $country                           = filter_var($country_code3, FILTER_SANITIZE_STRING);
+        $transDate                         = filter_var(date('Y-m-d H:i:s'), FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $locale                            = filter_var($iso_code, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $country                           = filter_var($country_code3, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $email                             = filter_var($customer->email, FILTER_SANITIZE_EMAIL);
         $notifyUrl                         = filter_var(
             $this->context->link->getModuleLink($this->module->name, 'validate', array(), true),
-            FILTER_SANITIZE_STRING
+            FILTER_SANITIZE_FULL_SPECIAL_CHARS
         );
         $userField1                        = $cart_id;
         $userField2                        = $secure_key;
         $userField3                        = 'prestashop-v' . $this->module->version;
-        $encryption_key                    = Configuration::get('PAYGATE_ENCRYPTION_KEY');
+        $encryptionKey                    = Configuration::get('PAYGATE_ENCRYPTION_KEY');
 
         $initiateData = array(
-            'PAYGATE_ID'        => $paygateID,
             'REFERENCE'         => $reference,
             'AMOUNT'            => $amount,
             'CURRENCY'          => $currency,
@@ -138,39 +141,23 @@ class PaygatePaymentModuleFrontController extends ModuleFrontController
             }
         }
 
-        $checksum_source = '';
-        foreach ($initiateData as $initiateDatum) {
-            $checksum_source .= $initiateDatum;
-        }
-        $checksum_source          .= $encryption_key;
-        $initiateData['CHECKSUM'] = md5($checksum_source);
+        $paymentRequest = new PaymentRequest($paygateID, $encryptionKey);
 
         try {
-            // Open connection
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, 'https://secure.paygate.co.za/payweb3/initiate.trans');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_NOBODY, false);
-            curl_setopt($ch, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $initiateData);
-
-            // Execute post
-            $result = curl_exec($ch);
-
-            // Close connection
-            curl_close($ch);
-        } catch (Exception $e) {
-            echo $e->getMessage();
+            $response = $paymentRequest->initiate($initiateData);
+        } catch (Exceptione $e) {
+            echo 'Error initiating payment: ' . $e->getMessage();
         }
 
-        $r = [];
-        if (isset($result) && $result !== '') {
-            parse_str($result, $r);
-            $data['CHECKSUM']       = isset($r['CHECKSUM']) ? $r['CHECKSUM'] : '';
-            $data['PAY_REQUEST_ID'] = isset($r['PAY_REQUEST_ID']) ? $r['PAY_REQUEST_ID'] : '';
-            $this->context->smarty->assign('data', $data);
+        $parsedResponse = [];
+        if ($response !== '') {
+            parse_str($response, $parsedResponse);
+
+            $checksum = $parsedResponse['CHECKSUM'];
+            $payRequestId = $parsedResponse['PAY_REQUEST_ID'];
+
+            $redirectHTML = $paymentRequest->getRedirectHTML($payRequestId, $checksum);
+            $this->context->smarty->assign('redirectHTML', $redirectHTML);
             $this->setTemplate('module:paygate/views/templates/front/payment-redirect.tpl');
         }
     }

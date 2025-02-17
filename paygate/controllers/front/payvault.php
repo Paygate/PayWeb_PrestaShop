@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -26,9 +26,9 @@ class PaygatePayVaultModuleFrontController extends ModuleFrontController
 
     /**
      *
-     * @throws \PrestaShopException
+     * @throws PrestaShopException
      */
-    public function initContent()
+    public function initContent(): void
     {
         parent::initContent();
         $this->context = Context::getContext();
@@ -57,7 +57,10 @@ class PaygatePayVaultModuleFrontController extends ModuleFrontController
         $this->setVaultTemplate($vaults, $deleteUrl);
     }
 
-    private function setVaultTemplate(array $vaults, string $deleteUrl)
+    /**
+     * @throws PrestaShopException
+     */
+    private function setVaultTemplate(array $vaults, string $deleteUrl): void
     {
         if (Context::getContext()->customer->id) {
             $this->context->smarty->assign('id_customer', Context::getContext()->customer->id);

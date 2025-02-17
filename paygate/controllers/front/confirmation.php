@@ -1,12 +1,15 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
 
+use Payfast\PayfastCommon\Gateway\Request\PaymentRequest;
+
+require_once __DIR__ . '/../../vendor/autoload.php';
 require_once _PS_MODULE_DIR_ . 'paygate/classes/PayVault.php';
 
 class PaygateConfirmationModuleFrontController extends ModuleFrontController
@@ -15,7 +18,7 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
     /**
      * Function returned to by normal redirect
      * This is always hit
-     * @throws \PrestaShopDatabaseException|\PrestaShopException
+     * @throws PrestaShopDatabaseException|PrestaShopException
      */
     public function initContent(): void
     {
@@ -66,25 +69,23 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
                     // Make POST request to Paygate to query the transaction and get full response data
                     $post = $_POST;
 
-                    $data                   = [];
-                    $data['PAYGATE_ID']     = $pg_id;
-                    $data['PAY_REQUEST_ID'] = $post['PAY_REQUEST_ID'];
-                    $data['REFERENCE']      = $reference;
-                    $data['CHECKSUM']       = md5(implode('', $data) . $pg_key);
-                    $fieldsString           = http_build_query($data);
-
-                    $result = $this->makeQueryRequest($fieldsString);
-
-                    if (!empty($result)) {
+                    try {
+                        $paymentRequest   = new PaymentRequest($pg_id, $pg_key);
+                        $response = $paymentRequest->query($post['PAY_REQUEST_ID'], $reference);
+                    } catch (Exceptione $e) {
+                        echo 'Error querying transaction: ' . $e->getMessage();
+                    }
+                    $result = [];
+                    if (!empty($response)) {
+                        parse_str($response, $result);
                         // Update purchase status
                         $extra_vars['transaction_id'] = $result['USER1'];
                         $method_name                  = $this->module->displayName;
                         if (!$order) {
-                            /** @noinspection PhpUndefinedConstantInspection */
                             $this->module->validateOrder(
                                 (int)$cart->id,
                                 _PS_OS_PAYMENT_,
-                                (float)($result['AMOUNT'] / 100.0),
+                                $result['AMOUNT'] / 100.0,
                                 $method_name,
                                 null,
                                 $extra_vars,
@@ -95,7 +96,7 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
                         } else {
                             if (!$order->hasBeenPaid()) {
                                 $order->addOrderPayment(
-                                    (float)($result['AMOUNT'] / 100.0),
+                                    $result['AMOUNT'] / 100.0,
                                     $method_name,
                                     $result['USER1']
                                 );
@@ -166,33 +167,4 @@ class PaygateConfirmationModuleFrontController extends ModuleFrontController
         return true;
     }
 
-    /**
-     * @param $fieldsString
-     *
-     * @return array
-     */
-    private function makeQueryRequest($fieldsString): array
-    {
-        // Open connection
-        $ch = curl_init();
-
-        // Set the url, number of POST vars, POST data
-        curl_setopt($ch, CURLOPT_URL, 'https://secure.paygate.co.za/payweb3/query.trans');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_NOBODY, false);
-        curl_setopt($ch, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $fieldsString);
-
-        // Execute post
-        $result = curl_exec($ch);
-        parse_str($result, $result);
-        curl_close($ch);
-
-        if (is_array($result) && isset($result['TRANSACTION_STATUS'])) {
-            return $result;
-        }
-
-        return [];
-    }
 }

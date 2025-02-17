@@ -1,17 +1,19 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
 
+
 class PaygateValidateModuleFrontController extends ModuleFrontController
 {
 
     /**
      * Function returned to by IPN if enabled in configuration
+     * @throws PrestaShopDatabaseException
      */
     public function initContent(): void
     {
@@ -58,7 +60,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
                     $this->module->validateOrder(
                         (int)$cart->id,
                         _PS_OS_PAYMENT_,
-                        (float)($notify_data['AMOUNT'] / 100.0),
+                        $notify_data['AMOUNT'] / 100.0,
                         $method_name,
                         null,
                         $extra_vars,
@@ -68,7 +70,7 @@ class PaygateValidateModuleFrontController extends ModuleFrontController
                     );
                 } else {
                     $order->addOrderPayment(
-                        (float)($notify_data['AMOUNT'] / 100.0),
+                        $notify_data['AMOUNT'] / 100.0,
                         $method_name,
                         $notify_data['USER1']
                     );
