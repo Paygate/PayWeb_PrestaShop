@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
@@ -14,7 +14,7 @@ class PayVault
      * @param array $result
      *
      * @return void
-     * @throws \PrestaShopDatabaseException
+     * @throws PrestaShopDatabaseException
      */
     public static function storeVault(int $customerId, array $result): void
     {
@@ -58,7 +58,7 @@ class PayVault
      * @param int $customerId
      *
      * @return array
-     * @throws \PrestaShopDatabaseException
+     * @throws PrestaShopDatabaseException
      */
     public static function customerVaults(int $customerId): array
     {
@@ -85,11 +85,10 @@ class PayVault
     {
         $dbPrefix = _DB_PREFIX_;
         $db       = Db::getInstance();
-        $vault    = $db->getValue(
+
+        return $db->getValue(
             "select vault_id from `{$dbPrefix}paygate_vaults` where id_vault='$idVault' 
       and id_customer='$customerId'"
         ) ?? '';
-
-        return $vault;
     }
 }

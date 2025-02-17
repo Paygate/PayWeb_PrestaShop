@@ -1,6 +1,6 @@
 # PayWeb_PrestaShop
 
-## Paygate PrestaShop Plugin v1.8.5 for PrestaShop v8.2.0
+## Paygate PrestaShop Plugin v1.9.0 for PrestaShop v8.2.0
 
 This is the Paygate PayWeb3 plugin for PrestaShop. Please feel free to contact the Payfast support team at
 support@payfast.help should you require any assistance.

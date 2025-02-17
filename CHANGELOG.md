@@ -1,5 +1,16 @@
 # Changelog
 
+## [[v1.9.0]](https://github.com/Paygate/PayWeb_PrestaShop/releases/tag/v1.9.0)
+
+### Added
+
+- Code quality for PHP 8.3.
+- Integrated with the Payfast Common Library.
+
+### Tested
+
+- Tested on Prestashop 8.2.0.
+
 ## [[v1.8.5]](https://github.com/Paygate/PayWeb_PrestaShop/releases/tag/v1.8.5)
 
 ### Fixed

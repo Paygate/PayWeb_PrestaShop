@@ -1,12 +1,13 @@
 <?php
 /*
- * Copyright (c) 2024 Payfast (Pty) Ltd
+ * Copyright (c) 2025 Payfast (Pty) Ltd
  *
  * Author: App Inlet (Pty) Ltd
  *
  * Released under the GNU General Public License
  */
 
+use PrestaShop\PrestaShop\Core\Localization\Exception\LocalizationException;
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
 if ( ! defined('_PS_VERSION_')) {
@@ -19,17 +20,17 @@ class Paygate extends PaymentModule
 {
 
     const PAYGATE_ADMIN = 'Modules.Paygate.Admin';
-    protected $vaultableMethods = ['creditcard'];
-    protected $paygatePayMethods = [];
-    private $_postErrors = array();
+    protected array $vaultableMethods = ['creditcard'];
+    protected array $paygatePayMethods = [];
+    private array $_postErrors = array();
+    private array $fields_form;
 
     public function __construct()
     {
-        /** @noinspection PhpUndefinedConstantInspection */
         require_once _PS_MODULE_DIR_ . 'paygate/classes/methods.php';
         $this->name        = 'paygate';
         $this->tab         = 'payments_gateways';
-        $this->version     = '1.8.5';
+        $this->version     = '1.9.0';
         $this->author      = 'Paygate';
         $this->controllers = array('payment', 'validation');
 
@@ -46,14 +47,11 @@ class Paygate extends PaymentModule
             array(),
             self::PAYGATE_ADMIN
         );
-        /** @noinspection PhpUndefinedConstantInspection */
         $this->ps_versions_compliancy = array('min' => '1.7.1.0', 'max' => _PS_VERSION_);
     }
 
-    public function install()
+    public function install(): bool
     {
-        /** @noinspection PhpUndefinedConstantInspection */
-        /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paygate` (
                                 `cart_id` INT NOT NULL,
@@ -67,7 +65,6 @@ class Paygate extends PaymentModule
             '
         );
 
-        /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute(
             'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paygate_vaults` (
                 `id_vault` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -86,11 +83,9 @@ class Paygate extends PaymentModule
                && $this->registerHook('displayCustomerAccount');
     }
 
-    public function uninstall()
+    public function uninstall(): bool
     {
-        /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paygate`');
-        /** @noinspection PhpUndefinedConstantInspection */
         Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'paygate_vaults`');
 
         return (parent::uninstall());
@@ -100,8 +95,9 @@ class Paygate extends PaymentModule
      * @param $params
      *
      * @return array|PaymentOption[]
+     * @throws PrestaShopDatabaseException
      */
-    public function hookPaymentOptions($params)
+    public function hookPaymentOptions($params): array
     {
         if ( ! $this->active) {
             return [];
@@ -156,14 +152,6 @@ HTML;
 </table>
 HTML;
 
-        $inputs = [];
-        foreach ($this->paygatePayMethods as $key => $paygatePayMethod) {
-            $k = 'PAYGATE_PAYMENT_METHODS_' . $key;
-            if (Configuration::get($k) != '') {
-                $inputs[$key] = $paygatePayMethod;
-            }
-        }
-
         // Add vaulting options - card only
         $customerId = $params['cart']->id_customer;
         if ((int)Configuration::get('PAYGATE_PAY_VAULT') === 1 && !$customer->isGuest() && $pt === 0) {
@@ -209,13 +197,13 @@ VAULTS;
   if (method === 'creditcard') {
     document.getElementById('paygateVaultOptions').style.display = 'block';
   }
+
 });
 
 </script
 HTML;
 
         $paymentOption = new PaymentOption();
-        /** @noinspection PhpUndefinedConstantInspection */
         $paymentOption->setCallToActionText('Pay via Paygate')
                       ->setForm($payOptionsHtml)
                       ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo.png'))
@@ -225,9 +213,12 @@ HTML;
         return [$paymentOption];
     }
 
-    public function clearOldOrders()
+    /**
+     * @throws PrestaShopDatabaseException
+     * @throws Exception
+     */
+    public function clearOldOrders(): void
     {
-        /** @noinspection PhpUndefinedConstantInspection */
         $sql     = 'SELECT `cart_id` FROM ' . _DB_PREFIX_ . 'paygate;';
         $results = Db::getInstance()->ExecuteS($sql);
         foreach ($results as $id) {
@@ -240,7 +231,6 @@ HTML;
             }
         }
 
-        /** @noinspection PhpUndefinedConstantInspection */
         $sql2     = 'SELECT `cart_id`,`date_time` FROM ' . _DB_PREFIX_ . 'paygate;';
         $results2 = Db::getInstance()->ExecuteS($sql2);
         foreach ($results2 as $cart) {
@@ -257,7 +247,10 @@ HTML;
         }
     }
 
-    public function updateOrAddToTable($params)
+    /**
+     * @throws PrestaShopDatabaseException
+     */
+    public function updateOrAddToTable($params): void
     {
         global $cookie;
         $cart = $params['cart'];
@@ -285,31 +278,28 @@ HTML;
         foreach ($package_list as $id_address => $packageByAddress) {
             foreach ($packageByAddress as $id_package => $package) {
                 $product_list = $package['product_list'];
-                $carrierId    = isset($package['id_carrier']) ? $package['id_carrier'] : null;
-                /** @noinspection PhpUndefinedConstantInspection */
-                /** @noinspection PhpUndefinedConstantInspection */
-                /** @noinspection PhpUndefinedConstantInspection */
+                $carrierId    = $package['id_carrier'] ?? null;
                 $totals       = array(
                     "total_products"           => (float)$cart->getOrderTotal(
                         false,
-                        Cart::ONLY_PRODUCTS,
+                        CartCore::ONLY_PRODUCTS,
                         $product_list,
                         $carrierId
                     ),
                     'total_products_wt'        => (float)$cart->getOrderTotal(
                         true,
-                        Cart::ONLY_PRODUCTS,
+                        CartCore::ONLY_PRODUCTS,
                         $product_list,
                         $carrierId
                     ),
                     'total_discounts_tax_excl' => (float)abs(
-                        $cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS, $product_list, $carrierId)
+                        $cart->getOrderTotal(false, CartCore::ONLY_DISCOUNTS, $product_list, $carrierId)
                     ),
                     'total_discounts_tax_incl' => (float)abs(
-                        $cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS, $product_list, $carrierId)
+                        $cart->getOrderTotal(true, CartCore::ONLY_DISCOUNTS, $product_list, $carrierId)
                     ),
                     'total_discounts'          => (float)abs(
-                        $cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS, $product_list, $carrierId)
+                        $cart->getOrderTotal(true, CartCore::ONLY_DISCOUNTS, $product_list, $carrierId)
                     ),
                     'total_shipping_tax_excl'  => (float)$cart->getPackageShippingCost(
                         $carrierId,
@@ -330,25 +320,25 @@ HTML;
                         $product_list
                     ),
                     'total_wrapping_tax_excl'  => (float)abs(
-                        $cart->getOrderTotal(false, Cart::ONLY_WRAPPING, $product_list, $carrierId)
+                        $cart->getOrderTotal(false, CartCore::ONLY_WRAPPING, $product_list, $carrierId)
                     ),
                     'total_wrapping_tax_incl'  => (float)abs(
-                        $cart->getOrderTotal(true, Cart::ONLY_WRAPPING, $product_list, $carrierId)
+                        $cart->getOrderTotal(true, CartCore::ONLY_WRAPPING, $product_list, $carrierId)
                     ),
                     'total_wrapping'           => (float)abs(
-                        $cart->getOrderTotal(true, Cart::ONLY_WRAPPING, $product_list, $carrierId)
+                        $cart->getOrderTotal(true, CartCore::ONLY_WRAPPING, $product_list, $carrierId)
                     ),
-                    'total_paid_tax_excl'      => (float)Tools::ps_round(
-                        (float)$cart->getOrderTotal(false, Cart::BOTH, $product_list, $carrierId),
-                        _PS_PRICE_COMPUTE_PRECISION_
+                    'total_paid_tax_excl'      => Tools::ps_round(
+                        (float)$cart->getOrderTotal(false, CartCore::BOTH, $product_list, $carrierId),
+                        Context::getContext()->getComputingPrecision()
                     ),
-                    'total_paid_tax_incl'      => (float)Tools::ps_round(
-                        (float)$cart->getOrderTotal(true, Cart::BOTH, $product_list, $carrierId),
-                        _PS_PRICE_COMPUTE_PRECISION_
+                    'total_paid_tax_incl'      => Tools::ps_round(
+                        (float)$cart->getOrderTotal(true, CartCore::BOTH, $product_list, $carrierId),
+                        Context::getContext()->getComputingPrecision()
                     ),
-                    '$total_paid'              => (float)Tools::ps_round(
-                        (float)$cart->getOrderTotal(true, Cart::BOTH, $product_list, $carrierId),
-                        _PS_PRICE_COMPUTE_PRECISION_
+                    '$total_paid'              => Tools::ps_round(
+                        (float)$cart->getOrderTotal(true, CartCore::BOTH, $product_list, $carrierId),
+                        Context::getContext()->getComputingPrecision()
                     ),
                 );
             }
@@ -357,7 +347,6 @@ HTML;
         /** @noinspection PhpUndefinedVariableInspection */
         $total = json_encode($totals, JSON_NUMERIC_CHECK);
 
-        /** @noinspection PhpUndefinedConstantInspection */
         $check_if_row_exists = Db::getInstance()->getValue(
             'SELECT cart_id FROM ' . _DB_PREFIX_ . 'paygate WHERE cart_id="' . (int)$cart_id . '"'
         );
@@ -391,7 +380,7 @@ HTML;
         }
     }
 
-    public function getContent()
+    public function getContent(): string
     {
         $this->_html = '';
 
@@ -411,7 +400,7 @@ HTML;
         return $this->_html;
     }
 
-    public function renderForm()
+    public function renderForm(): string
     {
         $fields_form = array(
             'form' => array(
@@ -574,7 +563,7 @@ HTML;
         return $helper->generateForm(array($fields_form));
     }
 
-    public function getConfigFieldsValues()
+    public function getConfigFieldsValues(): array
     {
         return array(
             'PAYGATE_ID'                           => Tools::getValue('PAYGATE_ID', Configuration::get('PAYGATE_ID')),
@@ -665,7 +654,7 @@ HTML;
         );
     }
 
-    public function logData($post_data)
+    public function logData($post_data): void
     {
         if (Configuration::get('PAYGATE_LOGS')) {
             $logFile = fopen(__DIR__ . '/paygate_prestashop_logs.txt', 'a+') or die('fopen failed');
@@ -674,6 +663,10 @@ HTML;
         }
     }
 
+    /**
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
     public function createOrderViaPaygate(
         Cart $cart,
         Currency $currency,
@@ -692,13 +685,13 @@ HTML;
         $order_status,
         $id_order_state,
         $carrierId = null
-    ) {
+    ): array {
         $order               = new Order();
         $order->product_list = $productList;
 
         if (Configuration::get('PS_TAX_ADDRESS_TYPE') == 'id_address_delivery') {
             $address          = new Address((int)$addressId);
-            $context->country = new Country((int)$address->id_country, (int)$cart->id_lang);
+            $context->country = new Country($address->id_country, (int)$cart->id_lang);
             if ( ! $context->country->active) {
                 throw new PrestaShopException('The delivery address country is not active.');
             }
@@ -713,7 +706,6 @@ HTML;
             $order->id_carrier = 0;
             $carrierId         = 0;
         }
-        /** @noinspection PhpUndefinedConstantInspection */
         $sql1  = 'SELECT totals FROM `' . _DB_PREFIX_ . 'paygate` WHERE cart_id = ' . (int)$cart->id . ';';
         $test  = Db::getInstance()->getValue($sql1);
         $test1 = json_decode($test);
@@ -725,7 +717,7 @@ HTML;
         };
         $totals  = $toArray($test1);
 
-        $order->id_customer         = (int)$cart->id_customer;
+        $order->id_customer         = $cart->id_customer;
         $order->id_address_invoice  = (int)$cart->id_address_invoice;
         $order->id_address_delivery = (int)$addressId;
         $order->id_currency         = $currency->id;
@@ -745,10 +737,9 @@ HTML;
         $order->gift_message    = $cart->gift_message;
         $order->mobile_theme    = $cart->mobile_theme;
         $order->conversion_rate = $currency->conversion_rate;
-        /** @noinspection PhpUndefinedConstantInspection */
         $amount_paid            = ! $dont_touch_amount ? Tools::ps_round(
             (float)$amount_paid,
-            _PS_PRICE_COMPUTE_PRECISION_
+            Context::getContext()->getComputingPrecision()
         ) : $amount_paid;
         $order->total_paid_real = $amount_paid;
 
@@ -795,7 +786,7 @@ HTML;
             $order_carrier                         = new OrderCarrier();
             $order_carrier->id_order               = (int)$order->id;
             $order_carrier->id_carrier             = $carrierId;
-            $order_carrier->weight                 = (float)$order->getTotalWeight();
+            $order_carrier->weight                 = $order->getTotalWeight();
             $order_carrier->shipping_cost_tax_excl = (float)$order->total_shipping_tax_excl;
             $order_carrier->shipping_cost_tax_incl = (float)$order->total_shipping_tax_incl;
             $order_carrier->add();
@@ -804,6 +795,10 @@ HTML;
         return ['order' => $order, 'orderDetail' => $order_detail];
     }
 
+    /**
+     * @throws LocalizationException
+     * @throws Exception
+     */
     public function createOrderCartRulesViaPaygate(
         Order $order,
         Cart $cart,
@@ -811,12 +806,18 @@ HTML;
         $total_reduction_value_ti,
         $total_reduction_value_tex,
         $id_order_state
-    ) {
+    ): array {
         // Prepare cart calculator to correctly get the value of each cart rule
         $calculator = $cart->newCalculator($order->product_list, $cart->getCartRules(), $order->id_carrier);
-        /** @noinspection PhpUndefinedConstantInspection */
-        $calculator->processCalculation(_PS_PRICE_COMPUTE_PRECISION_);
+        $calculator->processCalculation(Context::getContext()->getComputingPrecision());
         $cartRulesData = $calculator->getCartRulesData();
+
+        if (!$this->context->currency) {
+            $this->context->currency = new Currency(Configuration::get('PS_CURRENCY_DEFAULT'));
+        }
+
+        $locale = Tools::getContextLocale($this->context);
+
 
         $cart_rules_list = array();
         foreach ($cartRulesData as $cartRuleData) {
@@ -840,16 +841,15 @@ HTML;
             // THEN
             //  The voucher is cloned with a new value corresponding to the remainder
             $cartRuleReductionAmountConverted = $cartRule->reduction_amount;
-            if ((int)$cartRule->reduction_currency !== $cart->id_currency) {
+            if ($cartRule->reduction_currency !== $cart->id_currency) {
                 $cartRuleReductionAmountConverted = Tools::convertPriceFull(
                     $cartRule->reduction_amount,
-                    new Currency((int)$cartRule->reduction_currency),
+                    new Currency($cartRule->reduction_currency),
                     new Currency($cart->id_currency)
                 );
             }
             $remainingValue = $cartRuleReductionAmountConverted - $values[$cartRule->reduction_tax ? 'tax_incl' : 'tax_excl'];
-            /** @noinspection PhpUndefinedConstantInspection */
-            $remainingValue = Tools::ps_round($remainingValue, _PS_PRICE_COMPUTE_PRECISION_);
+            $remainingValue = Tools::ps_round($remainingValue, Context::getContext()->getComputingPrecision());
             if (count(
                     $order_list
                 ) == 1 && $remainingValue > 0 && $cartRule->partial_use == 1 && $cartRuleReductionAmountConverted > 0) {
@@ -870,10 +870,9 @@ HTML;
 
             $cart_rules_list[] = array(
                 'voucher_name'      => $cartRule->name,
-                'voucher_reduction' => ($values['tax_incl'] != 0.00 ? '-' : '') . Tools::displayPrice(
+                'voucher_reduction' => ($values['tax_incl'] != 0.00 ? '-' : '') . $locale->formatPrice(
                         $values['tax_incl'],
-                        $this->context->currency,
-                        false
+                        $this->context->currency->iso_code
                     ),
             );
         }
@@ -881,14 +880,15 @@ HTML;
         return $cart_rules_list;
     }
 
-    public function updateCartRuleData($cartRule, $id_order_state)
+    /**
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    public function updateCartRuleData($cartRule, $id_order_state): void
     {
-        $cart_rule_used = array();
         if ($id_order_state != Configuration::get('PS_OS_ERROR') && $id_order_state != Configuration::get(
-                'PS_OS_CANCELED'
-            ) && ! in_array($cartRule->id, $cart_rule_used)) {
-            $cart_rule_used[] = $cartRule->id;
-
+                'PS_OS_CANCELED')
+        ) {
             // Create a new instance of Cart Rule without id_lang, in order to update its quantity
             $cart_rule_to_update           = new CartRule((int)$cartRule->id);
             $cart_rule_to_update->quantity = max(0, $cart_rule_to_update->quantity - 1);
@@ -896,6 +896,12 @@ HTML;
         }
     }
 
+    /**
+     * @throws PrestaShopException
+     * @throws PrestaShopDatabaseException
+     * @throws LocalizationException
+     * @throws Exception
+     */
     public function createNewVoucher($cartRule, $order, $values, $total_reduction_value_ti, $total_reduction_value_tex)
     {
         // Create a new voucher from the original
@@ -934,11 +940,16 @@ HTML;
             CartRule::copyConditions($cartRule->id, $voucher->id);
             $orderLanguage = new Language((int)$order->id_lang);
 
+            if (!$this->context->currency) {
+                $this->context->currency = new Currency(Configuration::get('PS_CURRENCY_DEFAULT'));
+            }
+
+            $locale = Tools::getContextLocale($this->context);
+
             $params = array(
-                '{voucher_amount}' => Tools::displayPrice(
+                '{voucher_amount}' => $locale->formatPrice(
                     $voucher->reduction_amount,
-                    $this->context->currency,
-                    false
+                    $this->context->currency
                 ),
                 '{voucher_num}'    => $voucher->code,
                 '{firstname}'      => $this->context->customer->firstname,
@@ -946,7 +957,6 @@ HTML;
                 '{id_order}'       => $order->reference,
                 '{order_name}'     => $order->getUniqReference(),
             );
-            /** @noinspection PhpUndefinedConstantInspection */
             Mail::Send(
                 (int)$order->id_lang,
                 'voucher',
@@ -1003,7 +1013,7 @@ HTML;
         return $voucher;
     }
 
-    private function _postValidation()
+    private function _postValidation(): void
     {
         if (Tools::isSubmit('btnSubmit')) {
             if ( ! Tools::getValue('PAYGATE_ID')) {
@@ -1022,7 +1032,7 @@ HTML;
         }
     }
 
-    private function _postProcess()
+    private function _postProcess(): void
     {
         if (Tools::isSubmit('btnSubmit')) {
             Configuration::updateValue('PAYGATE_ID', Tools::getValue('PAYGATE_ID'));
@@ -1084,8 +1094,10 @@ HTML;
     }
 
 
-
-    public function hookDisplayCustomerAccount()
+    /**
+     * @throws SmartyException
+     */
+    public function hookDisplayCustomerAccount(): false|string
     {
         $this->context->smarty->assign(
             'card',
