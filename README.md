@@ -1,6 +1,6 @@
 # PayWeb_PrestaShop
 
-## Paygate PrestaShop Plugin v1.9.0 for PrestaShop v8.2.0
+## Paygate PrestaShop Plugin v1.9.1 for PrestaShop v9.0.0
 
 This is the Paygate PayWeb3 plugin for PrestaShop. Please feel free to contact the Payfast support team at
 support@payfast.help should you require any assistance.
@@ -8,8 +8,7 @@ support@payfast.help should you require any assistance.
 ## Installation
 
 1. **Download the Latest Release**
-    - Visit the [releases page](https://github.com/Paygate/PayWeb_PrestaShop/releases) and
-      download [paygate.zip](https://github.com/Paygate/PayWeb_PrestaShop/releases/download/v1.9.0/paygate.zip).
+      download [paygate.zip](https://github.com/Armysarge/PayWeb_PrestaShop/releases/download/v1.9.1/paygate.zip).
 
 2. **Install the Plugin**
     - Access your PrestaShop admin panel.

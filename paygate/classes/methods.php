@@ -13,11 +13,14 @@ class PaygateMethodsList
 
     public function getPaygateMethodsList(): array
     {
+        $context = Context::getContext();
+        $moduleUrl = $context->link->getBaseLink() . 'modules/paygate/';
+
         return  [
             'creditcard'   => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'Card',
-                'img'         => '../modules/paygate/assets/images/mastercard-visa.svg',
+                'img'         => $moduleUrl . 'assets/images/mastercard-visa.svg',
                 'ptype'       => 'CC',
                 'ptypedetail' => 'Credit Card',
                 'type'        => 'radio',
@@ -27,7 +30,7 @@ class PaygateMethodsList
             'banktransfer' => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'Bank Transfer',
-                'img'         => '../modules/paygate/assets/images/sid.svg',
+                'img'         => $moduleUrl . 'assets/images/sid.svg',
                 'ptype'       => 'BT',
                 'ptypedetail' => 'SID',
                 'type'        => 'radio',
@@ -36,7 +39,7 @@ class PaygateMethodsList
             'zapper'       => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'Zapper',
-                'img'         => '../modules/paygate/assets/images/zapper.svg',
+                'img'         => $moduleUrl . 'assets/images/zapper.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'Zapper',
                 'type'        => 'radio',
@@ -44,7 +47,7 @@ class PaygateMethodsList
             'snapscan'     => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'SnapScan',
-                'img'         => '../modules/paygate/assets/images/snapscan.svg',
+                'img'         => $moduleUrl . 'assets/images/snapscan.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'SnapScan',
                 'type'        => 'radio',
@@ -52,7 +55,7 @@ class PaygateMethodsList
             'paypal'       => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'PayPal',
-                'img'         => '../modules/paygate/assets/images/paypal.svg',
+                'img'         => $moduleUrl . 'assets/images/paypal.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'PayPal',
                 'type'        => 'radio',
@@ -60,7 +63,7 @@ class PaygateMethodsList
             'mobicred'     => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'MobiCred',
-                'img'         => '../modules/paygate/assets/images/mobicred.svg',
+                'img'         => $moduleUrl . 'assets/images/mobicred.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'Mobicred',
                 'type'        => 'radio',
@@ -68,7 +71,7 @@ class PaygateMethodsList
             'momopay'      => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'MomoPay',
-                'img'         => '../modules/paygate/assets/images/momopay.svg',
+                'img'         => $moduleUrl . 'assets/images/momopay.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'Momopay',
                 'type'        => 'radio',
@@ -76,7 +79,7 @@ class PaygateMethodsList
             'scantopay'   => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'ScanToPay',
-                'img'         => '../modules/paygate/assets/images/scan-to-pay.svg',
+                'img'         => $moduleUrl . 'assets/images/scan-to-pay.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'MasterPass',
                 'type'        => 'radio',
@@ -84,7 +87,7 @@ class PaygateMethodsList
             'applepay'   => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'ApplePay',
-                'img'         => '../modules/paygate/assets/images/apple-pay.svg',
+                'img'         => $moduleUrl . 'assets/images/apple-pay.svg',
                 'ptype'       => 'CC',
                 'ptypedetail' => 'Applepay',
                 'type'        => 'radio',
@@ -92,7 +95,7 @@ class PaygateMethodsList
             'rcs'   => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'RCS',
-                'img'         => '../modules/paygate/assets/images/rcs.svg',
+                'img'         => $moduleUrl . 'assets/images/rcs.svg',
                 'ptype'       => 'CC',
                 'ptypedetail' => 'RCS',
                 'type'        => 'radio',
@@ -100,7 +103,7 @@ class PaygateMethodsList
             'samsungpay'   => [
                 'name'        => 'paygate-paymethod',
                 'label'       => 'SamsungPay',
-                'img'         => '../modules/paygate/assets/images/samsung-pay.svg',
+                'img'         => $moduleUrl . 'assets/images/samsung-pay.svg',
                 'ptype'       => 'EW',
                 'ptypedetail' => 'Samsungpay',
                 'type'        => 'radio',
